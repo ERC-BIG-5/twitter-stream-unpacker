@@ -1,0 +1,153 @@
+{
+  "data": {
+    "attachments": {},
+    "author_id": "1160170221547618304",
+    "conversation_id": "1613687269906616320",
+    "created_at": "2023-01-13T00:00:00.000Z",
+    "edit_controls": {
+      "edits_remaining": 5,
+      "is_edit_eligible": true,
+      "editable_until": "2023-01-13T00:30:00.000Z"
+    },
+    "edit_history_tweet_ids": [
+      "1613687269906616320"
+    ],
+    "entities": {
+      "annotations": [
+        {
+          "start": 19,
+          "end": 25,
+          "probability": 0.8704,
+          "type": "Person",
+          "normalized_text": "ジェームズ1世"
+        },
+        {
+          "start": 27,
+          "end": 33,
+          "probability": 0.8755,
+          "type": "Person",
+          "normalized_text": "チャールズ1世"
+        },
+        {
+          "start": 35,
+          "end": 40,
+          "probability": 0.4392,
+          "type": "Person",
+          "normalized_text": "ピューリタン"
+        },
+        {
+          "start": 87,
+          "end": 87,
+          "probability": 0.5446,
+          "type": "Person",
+          "normalized_text": "壇"
+        }
+      ]
+    },
+    "geo": {},
+    "id": "1613687269906616320",
+    "lang": "ja",
+    "possibly_sensitive": false,
+    "public_metrics": {
+      "retweet_count": 0,
+      "reply_count": 0,
+      "like_count": 0,
+      "quote_count": 0
+    },
+    "reply_settings": "everyone",
+    "text": "「娯楽教書」をめぐる闘争である。これはジェームズ1世とチャールズ1世がピューリタンを迫害するという明確な目的で法制化したものであり、ピューリタンのすべての教会でこの教書を説教壇から朗読する事が命じられた。"
+  },
+  "includes": {
+    "users": [
+      {
+        "created_at": "2019-08-10T12:45:10.000Z",
+        "description": "1904-05年発刊、マックス・ヴェーバー著、3時間毎に１回ランダム+αにつぶやく仕様です。自動フォロバ100。中の人も呟きます。別bot垢⇒@bot29493657",
+        "entities": {
+          "description": {
+            "mentions": [
+              {
+                "start": 71,
+                "end": 83,
+                "username": "bot29493657"
+              }
+            ]
+          }
+        },
+        "id": "1160170221547618304",
+        "location": "日本 東京",
+        "name": "プロテスタンティズム倫理と資本主義の精神_bot",
+        "pinned_tweet_id": "1392250803159588864",
+        "profile_image_url": "https://pbs.twimg.com/profile_images/1160216991199723520/UxYmMSAq_normal.jpg",
+        "protected": false,
+        "public_metrics": {
+          "followers_count": 1192,
+          "following_count": 3503,
+          "tweet_count": 33957,
+          "listed_count": 14
+        },
+        "username": "bot03140572",
+        "verified": false
+      }
+    ],
+    "tweets": [
+      {
+        "attachments": {},
+        "author_id": "1160170221547618304",
+        "conversation_id": "1613687269906616320",
+        "created_at": "2023-01-13T00:00:00.000Z",
+        "edit_controls": {
+          "edits_remaining": 5,
+          "is_edit_eligible": true,
+          "editable_until": "2023-01-13T00:30:00.000Z"
+        },
+        "edit_history_tweet_ids": [
+          "1613687269906616320"
+        ],
+        "entities": {
+          "annotations": [
+            {
+              "start": 19,
+              "end": 25,
+              "probability": 0.8704,
+              "type": "Person",
+              "normalized_text": "ジェームズ1世"
+            },
+            {
+              "start": 27,
+              "end": 33,
+              "probability": 0.8755,
+              "type": "Person",
+              "normalized_text": "チャールズ1世"
+            },
+            {
+              "start": 35,
+              "end": 40,
+              "probability": 0.4392,
+              "type": "Person",
+              "normalized_text": "ピューリタン"
+            },
+            {
+              "start": 87,
+              "end": 87,
+              "probability": 0.5446,
+              "type": "Person",
+              "normalized_text": "壇"
+            }
+          ]
+        },
+        "geo": {},
+        "id": "1613687269906616320",
+        "lang": "ja",
+        "possibly_sensitive": false,
+        "public_metrics": {
+          "retweet_count": 0,
+          "reply_count": 0,
+          "like_count": 0,
+          "quote_count": 0
+        },
+        "reply_settings": "everyone",
+        "text": "「娯楽教書」をめぐる闘争である。これはジェームズ1世とチャールズ1世がピューリタンを迫害するという明確な目的で法制化したものであり、ピューリタンのすべての教会でこの教書を説教壇から朗読する事が命じられた。"
+      }
+    ]
+  }
+}
