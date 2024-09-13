@@ -1,16 +1,19 @@
+import atexit
 import bz2
 import gzip
 import io
 import json
-
 import tarfile
 from pathlib import Path
 from typing import Generator
+
+import jsonlines
+import orjson
 from tqdm import tqdm
 
-from consts import BASE_DATA_PATH, CONFIG, STATUS_FILE, BASE_PROCESS_PATH
+from consts import CONFIG, STATUS_FILE, BASE_PROCESS_PATH
 from db_config import init_db
-import atexit
+from db_models import DBPost
 
 
 def iter_dumps() -> list[Path]:
@@ -35,7 +38,8 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
                 with gzip.GzipFile(fileobj=io.BytesIO(extracted_file.read())) as gz_bytes:
                     yield member.name, gz_bytes.read()
 
-
+def dump2db(data: dict) -> None:
+    pass
 
 def process_dump(dump_path: Path):
     assert dump_path.name.startswith("archiveteam-twitter-stream")
@@ -48,8 +52,18 @@ def process_dump(dump_path: Path):
         tar_date_name = tar_file.name.lstrip("twitter-stream-").rstrip(".tar")
         tar_file_status = {}
         dump_file_status[tar_date_name] = tar_file_status
-        for jsonl_file_data in iter_jsonl_files_data(tar_file):
-            pass
+        for jsonl_file_name, jsonl_file_data in iter_jsonl_files_data(tar_file):
+            entries_count = 0
+            for jsonl_entry in jsonlines.Reader(io.BytesIO(jsonl_file_data)):
+                entries_count += 1
+                if "data" in jsonl_entry:
+                    data = jsonl_entry["data"]
+                else: # 2022-01
+                    data = jsonl_entry
+                if (data.get("referenced_tweets") is None or not CONFIG.ONLY_ORIG_TWEETS) and data.get("lang") in CONFIG.LANGUAGES:
+                    print(data)
+                    dump2db(jsonl_entry)
+                    # yield data
         break
 
 
