@@ -123,14 +123,6 @@ def process_dump(dump_path: Path, session_maker: sessionmaker):
     dump_file_status[COMPLETE_FLAG] = True
 
 
-def iter_tar_files(path: Path) -> Generator[Path, None, None]:
-    return path.glob("*.tar")
-
-
-def list_tar_gz_files(path: Path) -> Generator[Path, None, None]:
-    return path.glob("*.tar.gz")
-
-
 def exit_handler():
     with STATUS_FILE.open("w") as status_file:
         json.dump(status, status_file, indent=2)
@@ -138,11 +130,12 @@ def exit_handler():
 
 def main():
     atexit.register(exit_handler)
-    # init_db()
     BASE_PROCESS_PATH.mkdir(exist_ok=True)
     for dump in iter_dumps():
         print(dump)
-        session_maker = init_main_db(dump)
+        dump_file_date = dump.name.lstrip("archiveteam-twitter-stream")
+        month_no = int(dump_file_date.split("-")[1])
+        session_maker = init_main_db(month_no)
         process_dump(dump, session_maker)
 
 
@@ -153,21 +146,3 @@ if __name__ == "__main__":
     else:
         status = json.load(open(STATUS_FILE))
     main()
-
-    # process_dump(TORRENT_FOLDER / "archiveteam-twitter-stream-2022-12")
-    # for dump in iter_dumps():
-    #     process_dump(dump)
-
-    # TODO: We just dumped the 1. file!
-    # for tf in list(list_tar_files(Path("/media/ra/hd2/torrents/archiveteam-twitter-stream-2023-01")))[:1]:
-    #     print(tf)
-    #     for output_path in dump_jsonl_files(tf):
-    #         pass
-    # print(outpath)
-    # break
-
-    # for jsonl_fp in list_jsonl_file(Path("data")):
-    #     for idx, jsonl in enumerate(load_jsonl_file(jsonl_fp)):
-    #         # print(idx, jsonl)
-    #         print(json.dumps(jsonl, indent=2, ensure_ascii=False))
-    #         break
