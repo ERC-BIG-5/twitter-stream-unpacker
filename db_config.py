@@ -8,16 +8,17 @@ from consts import BASE_DATA_PATH, CONFIG, logger
 
 Base = declarative_base()
 
-def sqlite_db_path() -> Path:
-    return (BASE_DATA_PATH / CONFIG.SQLITE_FILE_PATH).absolute()
+def sqlite_db_path(min: bool = False) -> Path:
+        subp = CONFIG.SQLITE_MIN_FILE_PATH if min else CONFIG.SQLITE_FILE_PATH
+        return (BASE_DATA_PATH / subp).absolute()
 
 
-def create_sqlite_db() -> sessionmaker:
+def create_sqlite_db(min: bool = False) -> sessionmaker:
     """
     Create the SQLite database and tables based on the defined models.
     """
 
-    engine = create_engine(f'sqlite:///{sqlite_db_path().as_posix()}')
+    engine = create_engine(f'sqlite:///{sqlite_db_path(min).as_posix()}')
 
     def _fk_pragma_on_connect(dbapi_con, con_record):
         dbapi_con.execute('pragma foreign_keys=ON')
@@ -44,6 +45,7 @@ def init_db():
             sqlite_db_path().unlink()
 
     create_sqlite_db()
+    create_sqlite_db(True)
 
 
 
