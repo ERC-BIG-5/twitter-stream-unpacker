@@ -24,6 +24,7 @@ class Config(BaseSettings):
     SQLITE_FILE_PATH: Path
     LANGUAGES: list[str] = ["en", "es", "zxx", "pt"]
     ONLY_ORIG_TWEETS: bool = True
-
+    DUMP_THRESH:int = 50
+    STORE_COMPLETE_CONTENT:bool = False
 
 CONFIG = Config()
