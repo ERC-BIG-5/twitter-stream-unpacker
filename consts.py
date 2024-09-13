@@ -24,9 +24,9 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
 
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
-    RESET_DB: bool = False
-    SQLITE_FILE_PATH: Path
-    SQLITE_MIN_FILE_PATH: Path
+    # RESET_DB: bool = False
+    # SQLITE_FILE_PATH: Path
+    # SQLITE_MIN_FILE_PATH: Path
     LANGUAGES: list[str] = ["en", "es", "zxx", "pt"]
     ONLY_ORIG_TWEETS: bool = True
     DUMP_THRESH:int = 2000

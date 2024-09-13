@@ -9,15 +9,16 @@ from pathlib import Path
 from typing import Generator
 
 import jsonlines
+from sqlalchemy.orm import sessionmaker
 from tqdm import tqdm
 
 from consts import CONFIG, STATUS_FILE, BASE_PROCESS_PATH, logger, COMPLETE_FLAG
-from db_config import init_db, Session
+from db_config import init_main_db
 from db_models import DBPost
 
 
 def iter_dumps() -> list[Path]:
-    return CONFIG.STREAM_BASE_FOLDER.glob("*")
+    return CONFIG.STREAM_BASE_FOLDER.glob("archiveteam-twitter-stream-*")
 
 
 def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, None]:
@@ -52,19 +53,17 @@ def create_db_entry(data: dict) -> DBPost:
     return post
 
 
-def process_dump(dump_path: Path):
-    assert dump_path.name.startswith("archiveteam-twitter-stream")
+def process_dump(dump_path: Path, session_maker: sessionmaker):
     dump_file_date = dump_path.name.lstrip("archiveteam-twitter-stream")
-    dump_file_status = status.setdefault(dump_file_date,{})
+    dump_file_status = status.setdefault(dump_file_date, {})
     if dump_file_status.get(COMPLETE_FLAG):
         logger.debug(f"DUMP {dump_file_date} is already complete")
         return
     logger.debug(f"dumping: {dump_file_date}")
     dump_dir = BASE_PROCESS_PATH / dump_file_date
     dump_dir.mkdir(exist_ok=True)
-    session = Session()
+    session = session_maker()
     try:
-        # DEBUG_PROCESS_TAR_FILES = 2
         # iter the tar files in the dump
         tar_files = list(dump_path.glob("twitter-stream-*.tar"))
         for tar_idx, tar_file in enumerate(tar_files):
@@ -114,13 +113,9 @@ def process_dump(dump_path: Path):
                         session.add(db_post)
                         if len(session.new) > CONFIG.DUMP_THRESH:
                             session.commit()
-                        pass
-                        # yield data
                 json_file_status.update(
                     {"entries_count": entries_count,
-                     "accepted": accepted,
-                     "earliest_dt": earliest_dt.strftime("%Y.%m.%d:%H:%M:%S"),
-                     "latest_dt": latest_dt.strftime("%Y.%m.%d:%H:%M:%S")
+                     "accepted": accepted
                      })
             tar_file_status[COMPLETE_FLAG] = True
     finally:
@@ -143,13 +138,12 @@ def exit_handler():
 
 def main():
     atexit.register(exit_handler)
-    init_db()
+    # init_db()
     BASE_PROCESS_PATH.mkdir(exist_ok=True)
     for dump in iter_dumps():
-        if dump.name.endswith("archiveteam-twitter-stream-2022-01"):
-            continue
         print(dump)
-        process_dump(dump)
+        session_maker = init_main_db(dump)
+        process_dump(dump, session_maker)
 
 
 status: dict = {}
