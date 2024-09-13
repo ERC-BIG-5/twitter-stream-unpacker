@@ -1,3 +1,4 @@
+import logging
 from logging import getLogger, StreamHandler, Formatter
 from pathlib import Path
 
@@ -8,12 +9,15 @@ BASE_PROCESS_PATH = BASE_DATA_PATH / "process"
 STATUS_FILE = BASE_DATA_PATH / "status.json"
 ENV_FILE_PATH = Path(".env")
 
+COMPLETE_FLAG = "_COMPLETE"
+
 logger = getLogger("twitter-stream-unpacker")
 handler = StreamHandler()
 logger.addHandler(handler)
-logger.propagate = False
-handler.setFormatter(Formatter("%%(name)s - %(levelname)s - %(message)s"))
 
+logger.propagate = False
+handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
+logger.setLevel(logging.DEBUG)
 
 # CONFIG
 class Config(BaseSettings):
@@ -22,9 +26,10 @@ class Config(BaseSettings):
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
     RESET_DB: bool = False
     SQLITE_FILE_PATH: Path
+    SQLITE_MIN_FILE_PATH: Path
     LANGUAGES: list[str] = ["en", "es", "zxx", "pt"]
     ONLY_ORIG_TWEETS: bool = True
-    DUMP_THRESH:int = 50
+    DUMP_THRESH:int = 2000
     STORE_COMPLETE_CONTENT:bool = False
 
 CONFIG = Config()
