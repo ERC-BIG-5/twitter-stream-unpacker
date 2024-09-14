@@ -7,15 +7,16 @@ from sqlalchemy.orm import Session
 from tqdm import tqdm
 
 from consts import logger, CONFIG
-from db_config import init_main_db, init_min_db
+from db_config import main_db_path, init_db, min_db_path
 from db_models import DBPost
 
 
-def get_earliest_tweets_by_hour(year, month, for_languages: set[str]):
+def get_earliest_tweets_by_hour(year: int, month: int, for_languages: set[str]):
     max_days = calendar.monthrange(year, month)[1] + 1
-    main_session = init_main_db(month)()
-    min_session = init_min_db(month)()
+    main_session = init_db(main_db_path(month), read_only=True)()
+    min_session = init_db(min_db_path(month))()
     for day in range(1, max_days):
+        logger.info(f"day: {day}")
         # Create the date object for the start of the day
         start_date = datetime(year, month, day)
 
@@ -39,37 +40,21 @@ def get_earliest_tweets_by_hour(year, month, for_languages: set[str]):
 
                 # Execute the query
                 hour_post = main_session.execute(query).scalar_one_or_none()
-                copy_posts_to_new_db(hour_post, min_session)
-                # copy_posts_to_new_db
-                # new_post = DBPost()
-                # for col in ["platform", "post_url", "post_url_computed", "date_created", "content",
-                #             "text", "date_collected", "language", "year_created", "month_created", "day_created"]:
-                #     setattr(new_post, col, getattr(result, col))
-                # min_session.add(new_post)
-                # # If a tweet was found, add it to our list
-                # if result:
-                #     earliest_tweets.append(result)
+                if hour_post:
+                    copy_posts_to_new_db(hour_post, min_session)
     main_session.close()
     min_session.close()
 
 
-def copy_posts_to_new_db(posts: Sequence[Row[tuple[DBPost]]], session: Session):
-    # Prepare data for bulk insert
-    new_posts = []
-    # TODO CHECK IF WE NEED THIS LOOP
-    for row in posts:
-        post = row[0]
-        new_post = DBPost()
-        for col in ["platform", "post_url", "post_url_computed", "date_created", "content",
-                    "text", "date_collected", "language", "year_created", "month_created", "day_created"]:
-            setattr(new_post, col, getattr(post, col))
-        new_posts.append(new_post)
+def copy_posts_to_new_db(post: DBPost, session: Session):
+    new_post = DBPost()
+    for col in ["platform", "post_url", "post_url_computed", "date_created", "content",
+                "text", "date_collected", "language", "year_created", "month_created", "day_created"]:
+        setattr(new_post, col, getattr(post, col))
 
-    # Bulk insert into min_session
-    session.add_all(new_posts)
+    session.add(new_post)
     if len(session.new) > CONFIG.DUMP_THRESH:
         session.commit()
-
 
 
 def get_earliest_tweets_by_hour_claude(year, month, day, for_languages: set[str]):
@@ -133,4 +118,4 @@ def get_earliest_tweets_by_hour_claude(year, month, day, for_languages: set[str]
 if __name__ == "__main__":
     year = CONFIG.YEAR
     month = CONFIG.MONTH
-    earliest_tweets = get_earliest_tweets_by_hour(year, month,{"en", "es", "pt"})
+    get_earliest_tweets_by_hour(year, month, CONFIG.LANGUAGES)
