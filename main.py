@@ -13,8 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from tqdm import tqdm
 
 from consts import CONFIG, STATUS_FILE, BASE_PROCESS_PATH, logger, COMPLETE_FLAG
-from db_config import init_main_db
-from db_models import DBPost
+from db import init_db, main_db_path, DBPost
 
 
 def iter_dumps() -> list[Path]:
@@ -53,6 +52,13 @@ def create_db_entry(data: dict) -> DBPost:
     return post
 
 
+def check_original_tweet(data: dict) -> bool:
+    return (data.get("referenced_tweets") is None and
+            data.get("in_reply_to_status_id") is None and
+            data.get("quoted_status_id") is None and
+            data.get("retweeted_status") is None) or not CONFIG.ONLY_ORIG_TWEETS
+
+
 def process_dump(dump_path: Path, session_maker: sessionmaker):
     dump_file_date = dump_path.name.lstrip("archiveteam-twitter-stream")
     dump_file_status = status.setdefault(dump_file_date, {})
@@ -88,15 +94,9 @@ def process_dump(dump_path: Path, session_maker: sessionmaker):
                     entries_count += 1
                     if "data" in jsonl_entry:
                         data = jsonl_entry["data"]
-                    else:  # 2022-01
+                    else:  # 2022-01,02
                         data = jsonl_entry
-                    if (((data.get("referenced_tweets") is None and
-                          data.get("in_reply_to_status_id") is None and
-                          data.get("quoted_status_id") is None and
-                          data.get("retweeted_status") is None) or not CONFIG.ONLY_ORIG_TWEETS)
-                            and data.get("lang") in CONFIG.LANGUAGES):
-                        if data["text"].startswith("RT"):
-                            pass
+                    if check_original_tweet(data) and data.get("lang") in CONFIG.LANGUAGES:
                         # print(data)
                         accepted += 1
                         # logger.debug(f"{accepted} / {entries_count}")
@@ -128,6 +128,10 @@ def exit_handler():
         json.dump(status, status_file, indent=2)
 
 
+def load_status() -> dict:
+    return json.load(open(STATUS_FILE)) if STATUS_FILE.exists() else {}
+
+
 def main():
     atexit.register(exit_handler)
     BASE_PROCESS_PATH.mkdir(exist_ok=True)
@@ -135,14 +139,10 @@ def main():
         print(dump)
         dump_file_date = dump.name.lstrip("archiveteam-twitter-stream")
         month_no = int(dump_file_date.split("-")[1])
-        session_maker = init_main_db(month_no)
+        session_maker = init_db(main_db_path(month_no))
         process_dump(dump, session_maker)
 
 
-status: dict = {}
 if __name__ == "__main__":
-    if not STATUS_FILE.exists():
-        status = {}
-    else:
-        status = json.load(open(STATUS_FILE))
+    status: dict = load_status()
     main()
