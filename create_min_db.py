@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session
 from tqdm import tqdm
 
 from consts import logger, CONFIG
-from db_config import main_db_path, init_db, min_db_path
-from db_models import DBPost
+from db import main_db_path, init_db, min_db_path, DBPost
 
 
 def get_earliest_tweets_by_hour(year: int, month: int, for_languages: set[str]):
@@ -62,8 +61,9 @@ def get_earliest_tweets_by_hour_claude(year, month, day, for_languages: set[str]
     start_date = datetime(year, month, day)
     end_date = start_date + timedelta(days=1)
 
-    main_session = init_main_db(month)
-    min_session = init_min_db(month)
+    # TODO...
+    # main_session = init_main_db(month)
+    # min_session = init_min_db(month)
 
     # Subquery to select tweets for the specific day and languages
     subquery = (
@@ -95,17 +95,17 @@ def get_earliest_tweets_by_hour_claude(year, month, day, for_languages: set[str]
             )
 
             # Execute the query
-            result = main_session.execute(query).scalar_one_or_none()
-
-            if result:
-                new_post = DBPost()
-                for col in ["platform", "post_url", "post_url_computed", "date_created", "content",
-                            "text", "date_collected", "language", "year_created", "month_created", "day_created"]:
-                    setattr(new_post, col, getattr(result, col))
-                min_session.add(new_post)
-                earliest_tweets.append(result)
-
-    main_session.close()
+    #         result = main_session.execute(query).scalar_one_or_none()
+    #
+    #         if result:
+    #             new_post = DBPost()
+    #             for col in ["platform", "post_url", "post_url_computed", "date_created", "content",
+    #                         "text", "date_collected", "language", "year_created", "month_created", "day_created"]:
+    #                 setattr(new_post, col, getattr(result, col))
+    #             min_session.add(new_post)
+    #             earliest_tweets.append(result)
+    #
+    # main_session.close()
 
     # Filter out None results (hours with no tweets)
     valid_results = [row for row in earliest_tweets if row[0] is not None]
