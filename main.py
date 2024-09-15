@@ -1,21 +1,26 @@
-import atexit
 import bz2
 import gzip
 import io
 import json
 import tarfile
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, Union, Any
+from typing import Generator, Any, Optional
 
 import jsonlines
 from sqlalchemy.orm import Session
 from tqdm.auto import tqdm
 
-from consts import CONFIG, STATUS_FILE, BASE_PROCESS_PATH, logger, COMPLETE_FLAG, ACCEPTED_POSTS, TOTAL_POSTS, \
-    ITEM_COUNT, ITEMS_PROCESSED
+from consts import CONFIG, logger, BASE_DATA_PATH
 from db import init_db, main_db_path, DBPost
 
+
+@dataclass
+class CollectionStatus:
+    items: Optional[dict[str, Any]] = None
+    total_posts: int = 0
+    accepted_posts: int = 0
 
 def iter_dumps() -> list[Path]:
     return CONFIG.STREAM_BASE_FOLDER.glob("archiveteam-twitter-stream-*")
@@ -39,7 +44,7 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
                     yield member.name, gz_bytes.read()
 
 
-def create_db_entry(data: dict) -> DBPost:
+def create_db_entry(data: dict, location_index:list[str]) -> DBPost:
     post_dt = datetime.strptime(data["created_at"], '%a %b %d %H:%M:%S %z %Y')
     post = DBPost(
         platform="twitter",
@@ -47,7 +52,8 @@ def create_db_entry(data: dict) -> DBPost:
         date_created=post_dt,
         content=data if CONFIG.STORE_COMPLETE_CONTENT else None,
         text=data["text"],
-        language=data["lang"]
+        language=data["lang"],
+        location_index=location_index,
     )
     post.set_date_columns()
     return post
@@ -60,123 +66,96 @@ def check_original_tweet(data: dict) -> bool:
             data.get("retweeted_status") is None) or not CONFIG.ONLY_ORIG_TWEETS
 
 
-def process_jsonl_entry(jsonl_entry: dict, session: Session) -> bool:
+def process_jsonl_entry(jsonl_entry: dict,
+                        session: Session,
+                        location_index:list[str]) -> bool:
     if "data" in jsonl_entry:
         data = jsonl_entry["data"]
     else:  # 2022-01,02
         data = jsonl_entry
 
     if check_original_tweet(data) and data.get("lang") in CONFIG.LANGUAGES:
-        db_post = create_db_entry(jsonl_entry)
+        db_post = create_db_entry(jsonl_entry, location_index)
         session.add(db_post)
         return True
 
     return False
 
 
-def process_jsonl_file(jsonl_file_data: bytes, jsonl_file_name: str, session: Session, jsonl_file_status: dict) -> None:
-    if jsonl_file_status.get(COMPLETE_FLAG):
-        logger.debug(f"jsonl file is already complete: {jsonl_file_name}")
-        return
+def process_jsonl_file(jsonl_file_data: bytes,
+                       session: Session,
+                       location_index: list[str]) -> CollectionStatus:
 
     entries_count = 0
     accepted = 0
 
     for jsonl_entry in jsonlines.Reader(io.BytesIO(jsonl_file_data)):
+        location_index.append(entries_count)
         entries_count += 1
-        if process_jsonl_entry(jsonl_entry, session):
-            accepted += 1
 
-    try:
-        session.commit()
-        jsonl_file_status.update({
-            TOTAL_POSTS: entries_count,
-            ACCEPTED_POSTS: accepted,
-            COMPLETE_FLAG: True
-        })
-    except:
-        session.rollback()
-        raise
+        if process_jsonl_entry(jsonl_entry, session, location_index):
+            accepted += 1
+        location_index.pop()
+    return CollectionStatus(accepted_posts=accepted, total_posts=entries_count)
 
 def process_tar_file(tar_file: Path,
                      session: Session,
-                     tar_file_status: dict) -> None:
-    if tar_file_status.get(COMPLETE_FLAG):
-        logger.debug(f"tar file is already complete: {tar_file.name}")
-        return
+                     location_index: list[str]) -> CollectionStatus:
 
-    tar_file_status[ITEMS_PROCESSED] = 0
-    tar_file_status[TOTAL_POSTS] = 0
-    tar_file_status[ACCEPTED_POSTS] = 0
-
+    tar_file_status = CollectionStatus(items={})
     for jsonl_file_name, jsonl_file_data in tqdm(iter_jsonl_files_data(tar_file)):
-        jsonl_file_status = tar_file_status["items"].setdefault(jsonl_file_name, {})
-        process_jsonl_file(jsonl_file_data, jsonl_file_name, session, jsonl_file_status)
-        tar_file_status[ITEMS_PROCESSED] += 1
-        tar_file_status[TOTAL_POSTS] += jsonl_file_status[TOTAL_POSTS]
-        tar_file_status[ACCEPTED_POSTS] += jsonl_file_status[ACCEPTED_POSTS]
+        location_index.append(jsonl_file_name)
+        jsonl_file_status = process_jsonl_file(jsonl_file_data, session, location_index)
+        location_index.pop()
+        tar_file_status.total_posts += jsonl_file_status.total_posts
+        tar_file_status.accepted_posts += jsonl_file_status.accepted_posts
+        tar_file_status.items[jsonl_file_name] = jsonl_file_status
 
-    # set status
-    tar_file_status[ITEM_COUNT] = tar_file_status[ITEMS_PROCESSED]
-    del tar_file_status[ITEMS_PROCESSED]
-    tar_file_status[COMPLETE_FLAG] = True
+        if len(session.new) > CONFIG.DUMP_THRESH:
+            try:
+                session.commit()
+            except:
+                session.rollback()
+                raise
+    return tar_file_status
 
 
-def process_dump(dump_path: Path, session: Session):
+
+def process_dump(dump_path: Path, session: Session) -> CollectionStatus:
+    status = CollectionStatus(items={})
     dump_file_date_name = dump_path.name.lstrip("archiveteam-twitter-stream")
-    dump_file_status: dict[str, Union[str, bool, int, dict[str, Any]]] = global_status.setdefault(dump_file_date_name,
-                                                                                                  {"items": {}})
-    if dump_file_status.get(COMPLETE_FLAG):
-        logger.debug(f"dump {dump_file_date_name} is already complete")
-        return
-
+    location_index:list[str] = [dump_file_date_name]
     logger.debug(f"dump: {dump_file_date_name}")
-
-    dump_file_status[ITEMS_PROCESSED] =  0
-    dump_file_status[TOTAL_POSTS] = 0
-    dump_file_status[ACCEPTED_POSTS] = 0
 
     try:
         # iter the tar files in the dump
         tar_files = list(dump_path.glob("twitter-stream-*.tar"))
         for idx, tar_file in enumerate(tar_files):
-            # process_tar_file
             tar_file_date_name = tar_file.name.lstrip("twitter-stream-").rstrip(".tar")
-            tar_file_status = dump_file_status["items"].setdefault(tar_file_date_name, {"items": {}})
             logger.info(f"tar file: {tar_file_date_name} - {idx} / {len(tar_files)}")
-            process_tar_file(tar_file, session, tar_file_status)
+            location_index.append(tar_file_date_name)
+            tar_file_results = process_tar_file(tar_file, session, location_index)
+            location_index.pop()
+            status.items += 1
+            status.total_posts += tar_file_results.total_posts
+            status += tar_file_results.accepted_posts
+            status.items[tar_file_date_name] = tar_file_results
 
-            dump_file_status[ITEMS_PROCESSED] += 1
-            dump_file_status[TOTAL_POSTS] += tar_file_status[TOTAL_POSTS]
-            dump_file_status[ACCEPTED_POSTS] += tar_file_status[ACCEPTED_POSTS]
-
-        dump_file_status[ITEM_COUNT] = dump_file_status[ITEMS_PROCESSED]
-        del dump_file_status[ITEMS_PROCESSED]
-        dump_file_status[COMPLETE_FLAG] = True
     finally:
         session.close()
-
-
-def exit_handler():
-    with STATUS_FILE.open("w") as status_file:
-        json.dump(global_status, status_file, indent=2)
-
-
-def load_status() -> dict:
-    return json.load(open(STATUS_FILE)) if STATUS_FILE.exists() else {}
-
+    return status
 
 def main():
-    atexit.register(exit_handler)
-    BASE_PROCESS_PATH.mkdir(exist_ok=True)
     for dump in iter_dumps():
+        start_time = datetime.now()
         dump_file_date = dump.name.lstrip("archiveteam-twitter-stream")
         month_no = int(dump_file_date.split("-")[1])
         session_maker = init_db(main_db_path(month_no))
         session = session_maker()
-        process_dump(dump, session)
-
+        status = process_dump(dump, session)
+        json.dump(status, (BASE_DATA_PATH / f"{dump_file_date}.json").open("w"), indent=2)
+        end_time = datetime.now()
+        print(end_time - start_time)
 
 if __name__ == "__main__":
-    global_status: dict = load_status()
     main()
