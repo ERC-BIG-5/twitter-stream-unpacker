@@ -5,15 +5,8 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DATA_PATH = Path("data")
-BASE_PROCESS_PATH = BASE_DATA_PATH / "process"
-STATUS_FILE = BASE_DATA_PATH / "status.json"
 ENV_FILE_PATH = Path(".env")
 
-COMPLETE_FLAG = "complete"
-ITEMS_PROCESSED = "items_processed"
-ITEM_COUNT = "items_count"
-TOTAL_POSTS = "posts_count"
-ACCEPTED_POSTS  = "accepted_posts"
 
 ## LOGGER
 logger = getLogger("twitter-stream-unpacker")

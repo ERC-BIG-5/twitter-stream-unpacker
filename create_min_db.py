@@ -23,6 +23,7 @@ def get_earliest_tweets_by_hour(year: int, month: int, for_languages: set[str]):
         for hour in tqdm(range(24)):
             for lang in for_languages:
                 # Calculate start and end of the hour
+                # TODO Use DBPost.hour_created
                 hour_start = start_date + timedelta(hours=hour)
                 hour_end = hour_start + timedelta(hours=1)
 

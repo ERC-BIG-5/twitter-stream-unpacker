@@ -25,11 +25,12 @@ class DBPost(Base):
     text: Mapped[str] = mapped_column(String(300))
     date_collected: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
     language: Mapped[str] = mapped_column(String(5), nullable=False)
+    location_index: Mapped[list] = mapped_column(JSON, nullable=False)
 
     year_created: Mapped[int] = mapped_column(Integer, nullable=False)
     month_created: Mapped[int] = mapped_column(Integer, nullable=False)
     day_created: Mapped[int] = mapped_column(Integer, nullable=False)
-
+    hour_created: Mapped[int] = mapped_column(Integer, nullable=False)
 
     classification_relevant: Mapped[bool] = mapped_column(Boolean, nullable=True)
     classification_note: Mapped[str] = mapped_column(String, nullable=True)
@@ -41,6 +42,7 @@ class DBPost(Base):
         self.year_created = self.date_created.year
         self.month_created = self.date_created.month
         self.day_created = self.date_created.day
+        self.hour_created = self.date_created.hour
 
 
 def get_month_short_name(month_number: int) -> str:
@@ -60,7 +62,7 @@ def min_db_path(month_number: int) -> Path:
 
 
 
-def init_db(db_path: Path, read_only: bool = False):
+def init_db(db_path: Path, reset: bool = False, read_only: bool = False):
     """
 
     :param db_path:
@@ -68,7 +70,7 @@ def init_db(db_path: Path, read_only: bool = False):
     :return:
     """
     # ask for removal of db file, if config is True
-    if CONFIG.RESET_DB:
+    if CONFIG.RESET_DB or reset:
         delete_resp = input(f"Do you want to delete the db? : y/ other key\n")
         if delete_resp == "y":
             logger.info(f"deleting: {db_path}")
