@@ -45,24 +45,24 @@ class DBPost(Base):
         self.hour_created = self.date_created.hour
 
 
-def get_month_short_name(month_number: int) -> str:
+def _get_month_short_name(month_number: int) -> str:
     dt = date(year=1, day=1, month=month_number)
     return dt.strftime("%b")
 
 
 def main_db_path(month_number: int) -> Path:
     # jan,feb,mar, ...
-    month_short_name = get_month_short_name(month_number).lower()
+    month_short_name = _get_month_short_name(month_number).lower()
     return BASE_DATA_PATH / f'{month_short_name}_twitter.sqlite'
 
 
 def min_db_path(month_number: int) -> Path:
-    month_short_name = get_month_short_name(month_number).lower()
+    month_short_name = _get_month_short_name(month_number).lower()
     return BASE_DATA_PATH / f'{month_short_name}_min_twitter.sqlite'
 
 
 
-def init_db(db_path: Path, reset: bool = False, read_only: bool = False):
+def init_db(db_path: Path, reset: bool = False, read_only: bool = False) -> sessionmaker:
     """
 
     :param db_path:

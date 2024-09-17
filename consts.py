@@ -23,10 +23,11 @@ class Config(BaseSettings):
 
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
     LANGUAGES: list[str] = ["en", "es", "pt", "it", "de", "zxx", ]
-    ONLY_ORIG_TWEETS: bool = True
-    RESET_DB: bool = False
-    DUMP_THRESH: int = 2000
-    STORE_COMPLETE_CONTENT: bool = False
+    ONLY_ORIG_TWEETS: bool = True # for main
+    MAX_POSTS_PER_TIME_RANGE:int = 50
+    RESET_DB: bool = False # for main
+    DUMP_THRESH: int = 2000 # for main, and create_min
+    STORE_COMPLETE_CONTENT: bool = True # for main
     # MIN DBS
     YEAR: int = 2022
     MONTH: int = 2
