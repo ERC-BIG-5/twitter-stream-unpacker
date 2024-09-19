@@ -7,13 +7,13 @@ from sqlalchemy.orm import Session
 from tqdm import tqdm
 
 from consts import logger, CONFIG
-from db import main_db_path, init_db, min_db_path, DBPost
+from db import main_db_path, init_db, annotation_db_path, DBPost
 
 
 def get_earliest_tweets_by_hour(year: int, month: int, for_languages: set[str]):
     max_days = calendar.monthrange(year, month)[1] + 1
     main_session = init_db(main_db_path(month), read_only=True)()
-    min_session = init_db(min_db_path(month))()
+    min_session = init_db(annotation_db_path(month))()
     for day in range(1, max_days):
         logger.info(f"day: {day}")
         # Create the date object for the start of the day

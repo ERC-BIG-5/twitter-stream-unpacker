@@ -1,16 +1,38 @@
+from calendar import month
 from datetime import date
 from datetime import datetime
 from pathlib import Path
+from typing import Optional, Literal
 
-from sqlalchemy import String, DateTime, JSON, Integer, func, Boolean
+from sqlalchemy import String, DateTime, JSON, Integer, func, Boolean, SmallInteger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy_utils import create_database
 
-from consts import BASE_DATA_PATH, CONFIG, logger
+from consts import BASE_DATA_PATH, CONFIG, logger, MAIN_DB, ANNOTATION_DB
 
 Base = declarative_base()
+
+class TimeRangeEvalEntry(Base):
+    __tablename__ = 'time_range_eval_post'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    platform: Mapped[str] = mapped_column(String(20), nullable=False)
+    post_url_computed: Mapped[str] = mapped_column(String(60), nullable=False, unique=False) # todo, take proper user as path variable
+    date_created: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    location_index: Mapped[list] = mapped_column(JSON, nullable=False)
+    language: Mapped[str] = mapped_column(String(5), nullable=False)
+
+    year_created: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    month_created: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    day_created: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    hour_created: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+
+    def set_date_columns(self):
+        self.year_created = self.date_created.year
+        self.month_created = self.date_created.month
+        self.day_created = self.date_created.day
+        self.hour_created = self.date_created.hour
 
 class DBPost(Base):
     __tablename__ = 'post'
@@ -50,15 +72,19 @@ def _get_month_short_name(month_number: int) -> str:
     return dt.strftime("%b")
 
 
-def main_db_path(month_number: int) -> Path:
+def db_path(db_type: str,year: int, month: int, language: str = "XXX", platform: str = "twitter") -> str:
     # jan,feb,mar, ...
-    month_short_name = _get_month_short_name(month_number).lower()
-    return BASE_DATA_PATH / f'{month_short_name}_twitter.sqlite'
+    month_short_name = _get_month_short_name(month).lower()
+    lang = language.ljust(3,"_")
+    return f'{db_type}_{year}_{month_short_name}_{lang}_{platform}.sqlite'
 
 
-def min_db_path(month_number: int) -> Path:
-    month_short_name = _get_month_short_name(month_number).lower()
-    return BASE_DATA_PATH / f'{month_short_name}_min_twitter.sqlite'
+def main_db_path(year: int, month: int, language: str = "", platform: str = "twitter") -> Path:
+    return BASE_DATA_PATH / db_path(MAIN_DB, year, month, language, platform)
+
+
+def annotation_db_path(year: int, month: int, language: str = "", platform: str = "twitter") -> Path:
+    return BASE_DATA_PATH / db_path(ANNOTATION_DB, year, month, language, platform)
 
 
 
@@ -70,7 +96,7 @@ def init_db(db_path: Path, reset: bool = False, read_only: bool = False) -> sess
     :return:
     """
     # ask for removal of db file, if config is True
-    if CONFIG.RESET_DB or reset:
+    if (CONFIG.RESET_DB or reset) and db_path.exists():
         delete_resp = input(f"Do you want to delete the db? : y/ other key\n")
         if delete_resp == "y":
             logger.info(f"deleting: {db_path}")
