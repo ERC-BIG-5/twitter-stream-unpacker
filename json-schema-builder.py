@@ -6,7 +6,7 @@ import genson
 from genson import SchemaBuilder
 from sqlalchemy import func, select
 
-from db import init_db, DBPost, min_db_path
+from db import init_db, DBPost, annotation_db_path
 
 
 def build_schema(objects: Iterable[dict], check_div_every_k: int) -> dict:
@@ -35,7 +35,7 @@ def build_schema(objects: Iterable[dict], check_div_every_k: int) -> dict:
 
 
 def test_(k: int = 10):
-    with init_db(min_db_path(3))() as session:
+    with init_db(annotation_db_path(3))() as session:
         # user_count = session.query(func.count(DBPost.id)).scalar()
         # print(f"Total number of posts in the database: {user_count}")
         query = select(DBPost.id, DBPost.content).order_by(func.random()).limit(k)

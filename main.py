@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from tqdm.auto import tqdm
 
 from consts import CONFIG, logger, BASE_DATA_PATH
-from db import init_db, main_db_path, DBPost
+from db import init_db, DBPost, annotation_db_path, TimeRangeEvalEntry, main_db_path
 
 
 @dataclass
@@ -22,8 +22,18 @@ class CollectionStatus:
     total_posts: int = 0
     accepted_posts: int = 0
 
+    def to_dict(self):
+        d = self.__dict__.copy()
+        if self.items:
+            d["items"] = {k: v.to_dict() for k, v in self.items.items()}
+        else:
+            del d["items"]
+        return d
+
+
 def iter_dumps() -> list[Path]:
     return CONFIG.STREAM_BASE_FOLDER.glob("archiveteam-twitter-stream-*")
+
 
 
 def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, None]:
@@ -44,7 +54,9 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
                     yield member.name, gz_bytes.read()
 
 
-def create_db_entry(data: dict, location_index:list[str]) -> DBPost:
+def create_main_db_entry(data: dict, location_index: list[str]) -> DBPost:
+    # previous one, that we need differently later
+    # from TimeRangeEvalEntry
     post_dt = datetime.strptime(data["created_at"], '%a %b %d %H:%M:%S %z %Y')
     post = DBPost(
         platform="twitter",
@@ -52,6 +64,19 @@ def create_db_entry(data: dict, location_index:list[str]) -> DBPost:
         date_created=post_dt,
         content=data if CONFIG.STORE_COMPLETE_CONTENT else None,
         text=data["text"],
+        language=data["lang"],
+        location_index=location_index,
+    )
+    post.set_date_columns()
+    return post
+
+
+def create_time_range_entry(data: dict, location_index: list[str]) -> TimeRangeEvalEntry:
+    post_dt = datetime.strptime(data["created_at"], '%a %b %d %H:%M:%S %z %Y')
+    post = TimeRangeEvalEntry(
+        platform="twitter",
+        post_url_computed=f"https://x.com/x/status/{data['id']}",
+        date_created=post_dt,
         language=data["lang"],
         location_index=location_index,
     )
@@ -67,95 +92,139 @@ def check_original_tweet(data: dict) -> bool:
 
 
 def process_jsonl_entry(jsonl_entry: dict,
-                        session: Session,
-                        location_index:list[str]) -> bool:
+                        location_index: list[str]) -> TimeRangeEvalEntry:
     if "data" in jsonl_entry:
         data = jsonl_entry["data"]
     else:  # 2022-01,02
         data = jsonl_entry
 
-    if check_original_tweet(data) and data.get("lang") in CONFIG.LANGUAGES:
-        db_post = create_db_entry(jsonl_entry, location_index)
-        session.add(db_post)
-        return True
+    if (check_original_tweet(data) or CONFIG.ONLY_ORIG_TWEETS) and data.get("lang") in CONFIG.LANGUAGES:
+        db_post = create_time_range_entry(jsonl_entry, location_index)
+        return db_post
 
-    return False
+    return None
+
+
+def time_range_processing(post: DBPost, hours_tweets: dict[int, dict[str, Optional[DBPost]]]):
+    """
+
+    :param post:
+    :param hours_tweets:
+    :return:
+    """
+    if not hours_tweets[post.hour_created][post.language]:
+        hours_tweets[post.hour_created][post.language] = post
+    else:
+        if post.date_created < hours_tweets[post.hour_created][post.language].date_created:
+            hours_tweets[post.hour_created][post.language].date_created = post.date_created
 
 
 def process_jsonl_file(jsonl_file_data: bytes,
-                       session: Session,
-                       location_index: list[str]) -> CollectionStatus:
-
+                       location_index: list[str],
+                       hours_tweets: dict[int, dict[str, Optional[TimeRangeEvalEntry]]]) -> tuple[CollectionStatus, list[TimeRangeEvalEntry]]:
     entries_count = 0
     accepted = 0
+
+    posts: list[TimeRangeEvalEntry] = []
 
     for jsonl_entry in jsonlines.Reader(io.BytesIO(jsonl_file_data)):
         location_index.append(entries_count)
         entries_count += 1
-
-        if process_jsonl_entry(jsonl_entry, session, location_index):
-            accepted += 1
+        post: Optional[TimeRangeEvalEntry] = process_jsonl_entry(jsonl_entry, location_index.copy())
+        # language and original tweet filter
+        if post:
+            posts.append(post)
         location_index.pop()
-    return CollectionStatus(accepted_posts=accepted, total_posts=entries_count)
+    accepted += len(posts)
+
+    return CollectionStatus(accepted_posts=accepted, total_posts=entries_count), posts
+
+
+def tarfile_datestr(tar_file: Path) -> str:
+    return tar_file.name.lstrip("twitter-stream-").rstrip(".tar")
+
+def create_date_range_entries():
+    pass
+
 
 def process_tar_file(tar_file: Path,
                      session: Session,
                      location_index: list[str]) -> CollectionStatus:
+    # hour:language:post
+    hours_tweets: dict[int, dict[str, Optional[DBPost]]] = {h: {
+        lang: None for lang in CONFIG.LANGUAGES
+    } for h in range(24)}
 
     tar_file_status = CollectionStatus(items={})
+    posts: list[TimeRangeEvalEntry] = []
     for jsonl_file_name, jsonl_file_data in tqdm(iter_jsonl_files_data(tar_file)):
         location_index.append(jsonl_file_name)
-        jsonl_file_status = process_jsonl_file(jsonl_file_data, session, location_index)
+        # process jsonl file
+        jsonl_file_status, posts = process_jsonl_file(jsonl_file_data, location_index, hours_tweets)
         location_index.pop()
         tar_file_status.total_posts += jsonl_file_status.total_posts
         tar_file_status.accepted_posts += jsonl_file_status.accepted_posts
         tar_file_status.items[jsonl_file_name] = jsonl_file_status
 
+        logger.debug(f"num posts: {len(posts)}")
+        for post in posts:
+            session.add(post)
+        # this we do in a separate step
+        # for hour, lang_cols in hours_tweets.items():
+        #     for lang, tweet in lang_cols.items():
+        #         if not tweet:
+        #             logger.warning(f"tar file: {tarfile_datestr(tar_file)} has "
+        #                            f"a missing tweet: {hour},{lang}")
+        #             continue
+        #         session.add(tweet)
         if len(session.new) > CONFIG.DUMP_THRESH:
-            try:
-                session.commit()
-            except:
-                session.rollback()
-                raise
+            logger.debug(f"committing to db")
+            session.commit()
     return tar_file_status
-
 
 
 def process_dump(dump_path: Path, session: Session) -> CollectionStatus:
     status = CollectionStatus(items={})
     dump_file_date_name = dump_path.name.lstrip("archiveteam-twitter-stream")
-    location_index:list[str] = [dump_file_date_name]
+    location_index: list[str] = [dump_file_date_name]
     logger.debug(f"dump: {dump_file_date_name}")
 
     try:
         # iter the tar files in the dump
         tar_files = list(dump_path.glob("twitter-stream-*.tar"))
         for idx, tar_file in enumerate(tar_files):
-            tar_file_date_name = tar_file.name.lstrip("twitter-stream-").rstrip(".tar")
+            tar_file_date_name = tarfile_datestr(tar_file)
             logger.info(f"tar file: {tar_file_date_name} - {idx} / {len(tar_files)}")
             location_index.append(tar_file_date_name)
+            # process tar file
             tar_file_results = process_tar_file(tar_file, session, location_index)
             location_index.pop()
-            status.items += 1
             status.total_posts += tar_file_results.total_posts
-            status += tar_file_results.accepted_posts
+            status.accepted_posts += tar_file_results.accepted_posts
             status.items[tar_file_date_name] = tar_file_results
 
     finally:
         session.close()
     return status
 
+
 def main():
     for dump in iter_dumps():
         start_time = datetime.now()
         dump_file_date = dump.name.lstrip("archiveteam-twitter-stream")
         month_no = int(dump_file_date.split("-")[1])
-        session_maker = init_db(main_db_path(month_no))
+        session_maker = init_db(main_db_path(2022,month_no))
         session = session_maker()
-        status = process_dump(dump, session)
-        json.dump(status, (BASE_DATA_PATH / f"{dump_file_date}.json").open("w"), indent=2)
+        # call process func
+        status: CollectionStatus = process_dump(dump, session)
+
+        dump_file_name = f"{dump_file_date}.json"
+        json.dump(status.to_dict(), (BASE_DATA_PATH / dump_file_name).open("w"), indent=2)
+        logger.info(f"Created status file: {dump_file_name}")
         end_time = datetime.now()
         print(end_time - start_time)
+        # subprocess.run(["shutdown", "-h", "now"])
+
 
 if __name__ == "__main__":
     main()
