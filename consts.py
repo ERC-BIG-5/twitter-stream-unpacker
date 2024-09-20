@@ -6,7 +6,9 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BASE_DATA_PATH = Path("data")
+PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
+BASE_DATA_PATH = PROJECT_PATH / "data"
+BASE_STAT_PATH = BASE_DATA_PATH / "stats"
 ENV_FILE_PATH = Path(".env")
 
 MAIN_DB = "MAIN"
@@ -15,7 +17,7 @@ ANNOTATION_DB = "ANNO"
 
 
 ## LOGGER
-file_logs_path = Path("data/logs/")
+file_logs_path = BASE_DATA_PATH / "logs"
 file_logs_path.mkdir(exist_ok=True)
 logger = getLogger("twitter-stream-unpacker")
 logger.propagate = False
@@ -53,5 +55,5 @@ class Config(BaseSettings):
 
 CONFIG = Config()
 
-logger.setLevel(logging.DEBUG)
-file_handler.setLevel(logging.INFO)
+logger.setLevel(CONFIG.LOG_LEVEL)
+file_handler.setLevel(CONFIG.FILE_LOG_LEVEL)

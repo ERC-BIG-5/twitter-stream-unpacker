@@ -58,14 +58,14 @@ def grab_post_from_location(location_index: tuple[str, str, str, int]) -> dict:
     return json.loads(lines[jsonl_line])
 
 
-def grab_posts_from_location(location_index: tuple[str, str, list[str], list[list[int]]]) -> list[dict]:
+def grab_posts_from_location(location_index: tuple[str, str, dict[str, list[int]]]) -> list[dict]:
     """
     can grab many data from one tar file
     :param location_index:
     :return:
     """
     # these 2 parts are just a path and could be joined
-    dump_path, tar_file_date_name, jsonl_file_names, jsonl_lines = location_index
+    dump_path, tar_file_date_name, jsonl_file_names_and_lines = location_index
 
     p = CONFIG.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{dump_path}"
     if not p.exists():
@@ -76,17 +76,15 @@ def grab_posts_from_location(location_index: tuple[str, str, list[str], list[lis
 
     data: list[dict] = []
 
-    if len(jsonl_file_names) != len(jsonl_lines):
-        raise ValueError(
-            f"Length of number of tar files must match length of last part (jsonl files for each tar file)")
-    for jsonl_file_idx, jsonl_file_name in enumerate(jsonl_file_names):
+
+    for jsonl_file_name, jsonl_lines in jsonl_file_names_and_lines.items():
         compressed_data: bytes = extract_member_in_tar_file(tar_file_path, jsonl_file_name)
         compression_type = Path(jsonl_file_name).suffix[1:]
         assert compression_type
         jsonl_str_data = unpack(compressed_data, compression_type=cast(ZipFormat, compression_type),
                                 name=jsonl_file_name)
         lines = jsonl_str_data.decode("utf-8").split("\n")
-        for jsonl_idx in jsonl_lines[jsonl_file_idx]:
+        for jsonl_idx in jsonl_lines:
             data.append(json.loads(lines[jsonl_idx]))
     # alternatively try bot_suggestions.jsonl_iterator
     # print(jsonl_str_data)
@@ -96,5 +94,5 @@ def grab_posts_from_location(location_index: tuple[str, str, list[str], list[lis
 if __name__ == '__main__':
     # thats a test...
     #data = grab_post_from_location(("2022-03", "20220301", "20220301/20220301233400.json.gz", 3))
-    data = grab_posts_from_location(("2022-03", "20220301", ["20220301/20220301233400.json.gz"], [[3,4,5]]))
+    data = grab_posts_from_location(("2022-03", "20220301", {"20220301/20220301233400.json.gz": [3,4,5]}))
     print(json.dumps(data, indent=2))
