@@ -12,8 +12,9 @@ import jsonlines
 from sqlalchemy.orm import Session
 from tqdm.auto import tqdm
 
-from consts import CONFIG, logger, BASE_DATA_PATH
+from consts import CONFIG, logger, BASE_DATA_PATH, BASE_STAT_PATH
 from db import init_db, DBPost, annotation_db_path, TimeRangeEvalEntry, main_db_path
+from src.util import consider_deletion
 
 
 @dataclass
@@ -33,7 +34,6 @@ class CollectionStatus:
 
 def iter_dumps() -> list[Path]:
     return CONFIG.STREAM_BASE_FOLDER.glob("archiveteam-twitter-stream-*")
-
 
 
 def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, None]:
@@ -120,8 +120,8 @@ def time_range_processing(post: DBPost, hours_tweets: dict[int, dict[str, Option
 
 
 def process_jsonl_file(jsonl_file_data: bytes,
-                       location_index: list[str],
-                       hours_tweets: dict[int, dict[str, Optional[TimeRangeEvalEntry]]]) -> tuple[CollectionStatus, list[TimeRangeEvalEntry]]:
+                       location_index: list[str]) -> tuple[
+    CollectionStatus, list[TimeRangeEvalEntry]]:
     entries_count = 0
     accepted = 0
 
@@ -143,8 +143,6 @@ def process_jsonl_file(jsonl_file_data: bytes,
 def tarfile_datestr(tar_file: Path) -> str:
     return tar_file.name.lstrip("twitter-stream-").rstrip(".tar")
 
-def create_date_range_entries():
-    pass
 
 
 def process_tar_file(tar_file: Path,
@@ -160,7 +158,7 @@ def process_tar_file(tar_file: Path,
     for jsonl_file_name, jsonl_file_data in tqdm(iter_jsonl_files_data(tar_file)):
         location_index.append(jsonl_file_name)
         # process jsonl file
-        jsonl_file_status, posts = process_jsonl_file(jsonl_file_data, location_index, hours_tweets)
+        jsonl_file_status, posts = process_jsonl_file(jsonl_file_data, location_index)
         location_index.pop()
         tar_file_status.total_posts += jsonl_file_status.total_posts
         tar_file_status.accepted_posts += jsonl_file_status.accepted_posts
@@ -208,23 +206,26 @@ def process_dump(dump_path: Path, session: Session) -> CollectionStatus:
     return status
 
 
-def main():
-    for dump in iter_dumps():
-        start_time = datetime.now()
-        dump_file_date = dump.name.lstrip("archiveteam-twitter-stream")
-        month_no = int(dump_file_date.split("-")[1])
-        session_maker = init_db(main_db_path(2022,month_no))
+def get_dump_path(year: int, month: int)-> Path:
+    return CONFIG.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{year}-{str(month).rjust(2,'0')}"
+
+def main_create_time_range_db():
+    try:
+        month = 1
+        dump_path = get_dump_path(2022,month)
+        db_path = main_db_path(2022, month)
+        session_maker = init_db(db_path)
         session = session_maker()
         # call process func
-        status: CollectionStatus = process_dump(dump, session)
-
+        status: CollectionStatus = process_dump(dump_path, session)
+        dump_file_date = dump_path.name.lstrip("archiveteam-twitter-stream")
         dump_file_name = f"{dump_file_date}.json"
-        json.dump(status.to_dict(), (BASE_DATA_PATH / dump_file_name).open("w"), indent=2)
+        json.dump(status.to_dict(), (BASE_STAT_PATH / dump_file_name).open("w"), indent=2)
         logger.info(f"Created status file: {dump_file_name}")
-        end_time = datetime.now()
-        print(end_time - start_time)
-        # subprocess.run(["shutdown", "-h", "now"])
-
+    except KeyboardInterrupt:
+        consider_deletion(db_path)
+    except Exception as e:
+        consider_deletion(db_path)
 
 if __name__ == "__main__":
-    main()
+    main_create_time_range_db()
