@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PROJECT_PATH = Path("/")
+PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
 BASE_DATA_PATH = PROJECT_PATH / "data"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
 ENV_FILE_PATH = Path("../.env")

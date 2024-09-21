@@ -1,6 +1,9 @@
 from datetime import datetime
+from typing import Type
 
-from src.consts import CONFIG
+from sqlalchemy.orm import DeclarativeBase, Session
+
+from src.consts import CONFIG, logger
 from src.db import DBPost
 
 
@@ -19,3 +22,10 @@ def create_main_db_entry(data: dict, location_index: list[str], time_range_index
     )
     post.set_date_columns()
     return post
+
+
+def consider_drop_table(session: Session, table: Type[DeclarativeBase]):
+    delete_resp = input(f"Do you want to drop the table"
+                        f"{table.__table__}? : y/ other key\n")
+    if delete_resp == "y":
+        table.__table__.drop(session.get_bind())
