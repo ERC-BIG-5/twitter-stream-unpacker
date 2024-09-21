@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from consts import CONFIG
-from db import DBPost
+from src.consts import CONFIG
+from src.db import DBPost
 
 
 def create_main_db_entry(data: dict, location_index: list[str], time_range_index: int) -> DBPost:

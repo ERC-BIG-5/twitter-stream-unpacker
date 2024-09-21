@@ -1,9 +1,8 @@
 import json
 from datetime import datetime
 
-from collect_from_time_range_table import get_first_tweets_by_hour
-from consts import BASE_DATA_PATH
-from db import TimeRangeEvalEntry, DBAnnot1Post
+from src.consts import BASE_DATA_PATH
+from src.db import DBAnnot1Post
 
 def check_contains_media(post: dict)-> bool:
     pass
