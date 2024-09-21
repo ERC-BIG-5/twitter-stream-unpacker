@@ -9,7 +9,7 @@ import orjson
 from jsonlines import jsonlines
 from tqdm import tqdm
 
-from util import load_jsonl_file, list_jsonl_file
+from src.util import iter_jsonl_file, list_jsonl_file
 
 other_keys: set = set()
 
@@ -23,7 +23,7 @@ def data_ana_lang(tweet: dict)-> str:
 def count_all_langs(source_path: Path) -> Counter:
     lang_counter = Counter()
     for jsonl_fp in tqdm(list(list_jsonl_file(source_path))):
-        for jsonl_data in load_jsonl_file(jsonl_fp):
+        for jsonl_data in iter_jsonl_file(jsonl_fp):
             lang_counter[jsonl_data["data"]["lang"]] += 1
     return lang_counter
 
@@ -31,7 +31,7 @@ def count_all_langs(source_path: Path) -> Counter:
 def count_orig_posts(source_path: Path) -> int:
     count = 0
     for jsonl_fp in tqdm(list(list_jsonl_file(source_path))):
-        for jsonl_data in load_jsonl_file(jsonl_fp):
+        for jsonl_data in iter_jsonl_file(jsonl_fp):
             if jsonl_data.get("referenced_tweets") is None:
                 count +=1
     return count
@@ -54,7 +54,7 @@ def ana_structure(source_path: Path) -> dict:
 def iter_and_proc(source_path: Path, functions: dict[str, Callable[[dict], Any]]) -> list[dict[str, Any]]:
     result = []
     for jsonl_fp in tqdm(list(list_jsonl_file(source_path))):
-        for jsonl_data in load_jsonl_file(jsonl_fp):
+        for jsonl_data in iter_jsonl_file(jsonl_fp):
             da_res = {}
             for func_name, func in functions.items():
                 da_res[func_name] = func(jsonl_data)
@@ -68,7 +68,7 @@ def filter_by_lang(source: Path, dest: Path, languages: set[str]):
     with jsonlines.open(dest, mode='a',) as writer:
         # writer.write(...)
         # with open(dest, "a", encoding="utf-8") as fout:
-        for jsonl_data in load_jsonl_file(source):
+        for jsonl_data in iter_jsonl_file(source):
             data = jsonl_data["data"]
             try:
                 if data.get("referenced_tweets") is None and data.get("lang") in languages:
@@ -83,7 +83,7 @@ def filter_by_lang(source: Path, dest: Path, languages: set[str]):
 
 def grab_k_dump_to_file(source: Path, k_posts :int= 5, from_sample_n: int=50):
     options = []
-    for idx,jsonl_data in enumerate(load_jsonl_file(source)):
+    for idx,jsonl_data in enumerate(iter_jsonl_file(source)):
         options.append(jsonl_data)
         if idx == from_sample_n:
             break
