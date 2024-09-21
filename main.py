@@ -10,6 +10,7 @@ from typing import Generator, Any, Optional
 
 import jsonlines
 from sqlalchemy.orm import Session
+from sqlalchemy.util import deprecated
 from tqdm.auto import tqdm
 
 from consts import CONFIG, logger, BASE_DATA_PATH, BASE_STAT_PATH
@@ -54,6 +55,7 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
                     yield member.name, gz_bytes.read()
 
 
+@deprecated
 def create_main_db_entry(data: dict, location_index: list[str]) -> DBPost:
     # previous one, that we need differently later
     # from TimeRangeEvalEntry

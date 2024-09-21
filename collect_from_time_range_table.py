@@ -9,10 +9,14 @@ from db import init_db, main_db_path, annotation_db_path, TimeRangeEvalEntry
 from pick_data import grab_posts_from_location
 
 
-def get_first_tweets_by_hour(year: int, month: int, for_languages: set[str], pick_k: int = 5) -> list[TimeRangeEvalEntry]:
+# uses TimeRangeEvalEntry to collect tweet data
+def get_first_tweets_by_hour(year: int, month: int, for_languages: set[str], pick_k: int = 5) -> list[dict]:
     max_days = calendar.monthrange(year, month)[1] + 1
     main_session = init_db(main_db_path(year, month), read_only=True)()
     min_session = init_db(annotation_db_path(year, month))()
+
+    posts: list[dict] = []
+
     for day in range(1, max_days):
         logger.info(f"day: {day}")
         # Create the date object for the start of the day
@@ -43,7 +47,6 @@ def get_first_tweets_by_hour(year: int, month: int, for_languages: set[str], pic
                 hour_posts = main_session.execute(query).scalars().all()
                 # each post is part of a tuple
                 posts_to_collect.extend(((h, idx) for idx, h in enumerate(hour_posts)))
-
         # posts_to_collect
         month_str = str(month).rjust(2, "0")
         day_str = str(day).rjust(2, "0")
@@ -53,13 +56,14 @@ def get_first_tweets_by_hour(year: int, month: int, for_languages: set[str], pic
         for post, idx in posts_to_collect:
             # todo could assert location_index 0 and 1
             jsonl_files_and_jsonl_lines.setdefault(post.location_index[2], []).append(post.location_index[3])
-        posts = grab_posts_from_location((dump_path_date_name, tar_file_date_name, jsonl_files_and_jsonl_lines))
         # todo OVERALL the indices need to be included
-        return posts
+        posts.extend(grab_posts_from_location((dump_path_date_name, tar_file_date_name, jsonl_files_and_jsonl_lines)))
+
+
 
     main_session.close()
     min_session.close()
-
+    return posts
 
 if __name__ == "__main__":
     get_first_tweets_by_hour(2022, 3, {"en"})#CONFIG.LANGUAGES)
