@@ -33,13 +33,16 @@ def create_main_db_entry(data: dict, location_index: list[str]) -> DBPost:
 
 
 def create_all_process_jsonl_entry(jsonl_entry: dict,
-                        location_index: list[str]) -> Optional[DBPost]:
+                                   location_index: list[str],
+                                  languages: Optional[set[str]] = None) -> Optional[DBPost]:
     if "data" in jsonl_entry:
         data = jsonl_entry["data"]
     else:  # 2022-01,02
         data = jsonl_entry
 
-    if data.get("lang") in CONFIG.LANGUAGES and check_original_tweet(data):
+    if not languages:
+        languages = CONFIG.LANGUAGES
+    if data.get("lang") in languages and check_original_tweet(data):
         db_post = create_main_db_entry(jsonl_entry, location_index)
         return db_post
 
@@ -47,7 +50,8 @@ def create_all_process_jsonl_entry(jsonl_entry: dict,
 
 
 def create_all_process_jsonl_file(jsonl_file_data: bytes,
-                       location_index: list[str]) ->  list[DBPost]:
+                                  location_index: list[str],
+                                  languages: Optional[set[str]] = None) -> list[DBPost]:
     entries_count = 0
     posts: list[DBPost] = []
 
@@ -55,37 +59,38 @@ def create_all_process_jsonl_file(jsonl_file_data: bytes,
         location_index.append(entries_count)
         entries_count += 1
         # language and original tweet filter
-        post: Optional[DBPost] = create_all_process_jsonl_entry(jsonl_entry, location_index.copy())
+        post: Optional[DBPost] = create_all_process_jsonl_entry(jsonl_entry, location_index.copy(),languages)
         if post:
             posts.append(post)
         location_index.pop()
 
-    return  posts
+    return posts
 
 
 def create_all_process_tar_file(tar_file: Path,
-                         session: Session,
-                         location_index: list[str]):
-        # hour:language:post
+                                session: Session,
+                                location_index: list[str],
+                                languages: Optional[set[str]] = None):
+    # hour:language:post
 
-        posts: list[DBPost] = []
-        for jsonl_file_name, jsonl_file_data in tqdm(iter_jsonl_files_data(tar_file)):
-            location_index.append(jsonl_file_name)
-            # process jsonl file
-            posts = create_all_process_jsonl_file(jsonl_file_data, location_index)
-            location_index.pop()
+    posts: list[DBPost] = []
+    for jsonl_file_name, jsonl_file_data in tqdm(iter_jsonl_files_data(tar_file)):
+        location_index.append(jsonl_file_name)
+        # process jsonl file
+        posts = create_all_process_jsonl_file(jsonl_file_data, location_index,languages)
+        location_index.pop()
 
-            logger.debug(f"num posts: {len(posts)}")
-            for post in posts:
-                session.add(post)
-            if len(session.new) > CONFIG.DUMP_THRESH:
-                logger.debug(f"committing to db")
-                session.commit()
+        logger.debug(f"num posts: {len(posts)}")
+        for post in posts:
+            session.add(post)
+        if len(session.new) > CONFIG.DUMP_THRESH:
+            logger.debug(f"committing to db")
+            session.commit()
 
-        session.commit()
+    session.commit()
 
 
-def create_all_process_dump(dump_path: Path, session: Session):
+def create_all_process_dump(dump_path: Path, session: Session, languages: Optional[set[str]] = None):
     dump_file_date_name = dump_path.name.lstrip("archiveteam-twitter-stream")
     location_index: list[str] = [dump_file_date_name]
     logger.debug(f"dump: {dump_file_date_name}")
@@ -97,25 +102,46 @@ def create_all_process_dump(dump_path: Path, session: Session):
             logger.info(f"tar file: {tar_file_date_name} - {idx} / {len(tar_files)}")
             location_index.append(tar_file_date_name)
             # process tar file
-            create_all_process_tar_file(tar_file, session, location_index)
+            create_all_process_tar_file(tar_file, session, location_index, languages)
             location_index.pop()
 
     finally:
         session.close()
 
-def main_create_all_data_db():
+
+def consider_delete_all(paths: list[Path]):
+    delete_resp = input(f"Do you want to delete the files"
+                        f"db files ? : y/ other key\n")
+    if delete_resp == "y":
+        for session in paths:
+            path = Path(session.get_bind().url.database)
+            logger.info(f"deleting: {path}")
+            path.unlink()
+
+
+def create_all_multi_langs(dump_path: Path, year: int, month: int):
     try:
-        month = 3
-        year = 2028
-        dump_path = get_dump_path(year,month)
-        if not dump_path.exists():
-            logger.error(f"dumppath {dump_path} does not exist")
-            return
+        db_paths: dict[str, Session] = {
+            lang: init_db(main_db_path(year, month, lang))()
+            for lang in CONFIG.LANGUAGES
+        }
+        # call process func
+        # TODO
+        # create_all_process_dump(dump_path, session)
+    except KeyboardInterrupt:
+        consider_delete_all([Path(sess.get_bind().url.database) for sess in db_paths.values()])
+    except Exception as e:
+        traceback.print_exc()
+        consider_delete_all([Path(sess.get_bind().url.database) for sess in db_paths.values()])
+
+
+def create_all_merge_langs(dump_path: Path, year: int, month: int, languages: Optional[set[str]] = None):
+    try:
         db_path = main_db_path(year, month)
         session_maker = init_db(db_path)
         session = session_maker()
         # call process func
-        create_all_process_dump(dump_path, session)
+        create_all_process_dump(dump_path, session, languages)
     except KeyboardInterrupt:
 
         consider_drop_table(session, DBPost)
@@ -125,6 +151,20 @@ def main_create_all_data_db():
         consider_deletion(db_path)
 
 
+def main_create_all_data_db(split_by_lang: bool = False):
+    month = 1
+    year = 2022
+    languages = {"en"}
+    dump_path = get_dump_path(year, month)
+    if not dump_path.exists():
+        logger.error(f"dumppath {dump_path} does not exist")
+        return
+
+    if not split_by_lang:
+        create_all_merge_langs(dump_path, year, month, languages=languages)
+    else:
+        create_all_multi_langs(dump_path, year, month)
+
 
 if __name__ == "__main__":
-    main_create_all_data_db()
+    main_create_all_data_db(False)

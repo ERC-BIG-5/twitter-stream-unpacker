@@ -38,7 +38,8 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
 
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
-    LANGUAGES: list[str] = ["en", "es", "pt", "it", "de"]
+    LANGUAGES: list[str] = ["en", "es", "pt", "it", "de", "fr", "zxx"]
+    # todo, remove that...
     ONLY_ORIG_TWEETS: bool = field(default=True, metadata={"description": "Filtes out comments, retweets, quoted retweets..."}) # for main
     MAX_POSTS_PER_TIME_RANGE:int = 50
     RESET_DB: bool = False # for main
