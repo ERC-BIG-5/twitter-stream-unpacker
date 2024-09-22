@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+from src.collect_from_time_range_table import get_first_tweets_by_hour
 from src.consts import BASE_DATA_PATH
 from src.db import DBAnnot1Post
 
@@ -29,7 +30,7 @@ def create_annot1__from_time_range_posts(posts: list[dict]) -> list[DBAnnot1Post
     """
 
 def main_create_annot1_db():
-    # posts = get_first_tweets_by_hour(2022,3,{"en"},1)
+    posts = get_first_tweets_by_hour(2022,3,{"en"},1)
     posts = json.load((BASE_DATA_PATH / "TEMP_MAR.json").open())
     create_annot1__from_time_range_posts(posts)
     #json.dump(posts, (BASE_DATA_PATH / "TEMP_MAR.json").open("w", encoding="utf-8"))

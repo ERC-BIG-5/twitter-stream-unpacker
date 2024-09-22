@@ -61,6 +61,7 @@ def grab_post_from_location(location_index: tuple[str, str, str, int]) -> dict:
 def grab_posts_from_location(location_index: tuple[str, str, dict[str, list[int]]]) -> list[dict]:
     """
     can grab many data from one tar file
+    location structure: dump-folder, tar_path, {jsonl_file_name: list of indices}
     :param location_index:
     :return:
     """
