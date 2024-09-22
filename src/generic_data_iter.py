@@ -95,5 +95,16 @@ def generic_iter_collect_schema():
     main_generic_all_data(generate_json_schema())
 
 
+def collect_languages():
+
+    languages: set[str] = set()
+
+    def collect_lang(data: dict):
+        languages.add(data["lang"])
+
+
+    main_generic_all_data(collect_lang)
+    print(languages)
+
 if __name__ == "__main__":
-    generic_iter_collect_schema()
+    collect_languages()
