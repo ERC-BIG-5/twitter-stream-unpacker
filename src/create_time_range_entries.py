@@ -55,7 +55,7 @@ def process_jsonl_entry(jsonl_entry: dict,
     else:  # 2022-01,02
         data = jsonl_entry
 
-    if check_original_tweet(data) and data.get("lang") in CONFIG.LANGUAGES:
+    if data.get("lang") in CONFIG.LANGUAGES and check_original_tweet(data):
         db_post = create_time_range_entry(jsonl_entry, location_index)
         return db_post
 

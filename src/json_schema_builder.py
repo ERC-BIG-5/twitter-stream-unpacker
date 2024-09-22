@@ -1,5 +1,6 @@
 import json
 from collections.abc import Iterable
+from typing import Optional
 
 import deepdiff
 import genson
@@ -9,7 +10,7 @@ from sqlalchemy import func, select
 from db import init_db, DBPost, annotation_db_path
 
 
-def build_schema(objects: Iterable[dict], check_div_every_k: int) -> dict:
+def build_schema(objects: Iterable[dict], check_div_every_k: Optional[int] = None) -> dict:
     """
     note: this seems to be the way to avoid that some props are removed.
 
@@ -25,7 +26,7 @@ def build_schema(objects: Iterable[dict], check_div_every_k: int) -> dict:
         builder.add_schema(cur_builder)
         if idx == 0:
             cur_schema = builder.to_schema()
-        if idx != 0 and idx % check_div_every_k == 0:
+        if check_div_every_k is not None and (idx != 0 and idx % check_div_every_k == 0):
             next_schema = builder.to_schema()
             diff = deepdiff.DeepDiff(cur_schema, next_schema)
             print(json.dumps(json.loads(diff.to_json()), indent=2))
