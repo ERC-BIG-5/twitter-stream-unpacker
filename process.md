@@ -1,42 +1,21 @@
 # Process & functions
 
-## Timerange entries
+main_2022_posts
 
-`src.create_tine_range_entries`
+from that:
 
-TimeRangeEvalEntry is an ORM class to store datetime of entries and
-their location in the wicked dump-folder/tarfile-jsonl file structure
-It stores them in the MAIN db, and also creates statistics (json in the stats folder)
+anno_1_2022_jan
+__BUT IT LOOKS WRONG!__
 
+24.09
 
-## Generic data-iter
+time_range entries with stats
+main_2022_jan
 
-`src.generic_data_iter`
+---> date_ranges have a wrong date, cuz they use strftime from the `created_at` field,
+which is not accurate!
 
-This module runs over the whole dataset (tar files, jsonl files lines) and runs an arbitrary function.
-The function can be passed to the main function.
+but then why is the 1. post so late?
 
-## Create full entries
-
-`src.create_all_entries``
-
-creates full posts (with content) DBPost orm items
-
-## Create annotation entries
-
-`src.create_annon_entries`
-
-`create_annot1__from_time_range_posts(posts: list[dict])`
-
-Creates DBAnnot1Post orm elements in the ANNON db.
-main makes use of `from src.collect_from_time_range_table.get_first_tweets_by_hour`, which goes through a time_range table...
-
-
-## Create Annot from Full db
-
-`src-create_min_db` previous version of annot db (min). depracated since we need k per hour.
-
-## UTIL
-
-
-
+create a new annot_db with an alternative method
+generic_data_iter runs over the raw packed data storing all candidates 
