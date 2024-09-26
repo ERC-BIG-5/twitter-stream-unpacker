@@ -1,13 +1,11 @@
 import calendar
 from datetime import datetime, timedelta
-from typing import Sequence
 
-from sqlalchemy import select, extract, and_, Row
+from src.consts import logger, CONFIG
+from src.db import main_db_path, init_db, annotation_db_path, DBPost
+from sqlalchemy import select, extract, and_
 from sqlalchemy.orm import Session
 from tqdm import tqdm
-
-from consts import logger, CONFIG
-from db import main_db_path, init_db, annotation_db_path, DBPost
 
 
 def get_earliest_tweets_by_hour(year: int, month: int, for_languages: set[str]):

@@ -1,7 +1,8 @@
 import io
 import io
 import json
-from dataclasses import dataclass
+import traceback
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -13,14 +14,15 @@ from tqdm.auto import tqdm
 from consts import CONFIG, logger, BASE_STAT_PATH
 from db import init_db, TimeRangeEvalEntry, main_db_path
 from src.post_filter import check_original_tweet
-from src.util import consider_deletion, get_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data, post_url
+from src.util import consider_deletion, get_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data, post_url, \
+    post_date
 
 
 @dataclass
 class CollectionStatus:
     items: Optional[dict[str, Any]] = None
     total_posts: int = 0
-    accepted_posts: int = 0
+    accepted_posts: dict[str, int] = field(default_factory=dict)
 
     def to_dict(self):
         d = self.__dict__.copy()
@@ -36,7 +38,7 @@ def iter_dumps() -> list[Path]:
 
 
 def create_time_range_entry(data: dict, location_index: list[str]) -> TimeRangeEvalEntry:
-    post_dt = datetime.strptime(data["created_at"], '%a %b %d %H:%M:%S %z %Y')
+    post_dt = post_date(data['timestamp_ms'])
     post = TimeRangeEvalEntry(
         platform="twitter",
         post_url_computed=post_url(data),
@@ -66,7 +68,7 @@ def process_jsonl_file(jsonl_file_data: bytes,
                        location_index: list[str]) -> tuple[
     CollectionStatus, list[TimeRangeEvalEntry]]:
     entries_count = 0
-    accepted = 0
+    accepted: dict[str, int] = {}
 
     posts: list[TimeRangeEvalEntry] = []
 
@@ -77,8 +79,8 @@ def process_jsonl_file(jsonl_file_data: bytes,
         # language and original tweet filter
         if post:
             posts.append(post)
+            accepted[post.language] = accepted.setdefault(post.language, 0) + 1
         location_index.pop()
-    accepted += len(posts)
 
     return CollectionStatus(accepted_posts=accepted, total_posts=entries_count), posts
 
@@ -94,7 +96,9 @@ def process_tar_file(tar_file: Path,
         jsonl_file_status, posts = process_jsonl_file(jsonl_file_data, location_index)
         location_index.pop()
         tar_file_status.total_posts += jsonl_file_status.total_posts
-        tar_file_status.accepted_posts += jsonl_file_status.accepted_posts
+        for accepted_lang, accepted_count in jsonl_file_status.accepted_posts.items():
+            tar_file_status.accepted_posts[accepted_lang] = tar_file_status.accepted_posts.setdefault(accepted_lang,
+                                                                                                      0) + accepted_count
         tar_file_status.items[jsonl_file_name] = jsonl_file_status
 
         logger.debug(f"num posts: {len(posts)}")
@@ -132,7 +136,9 @@ def process_dump(dump_path: Path, session: Session) -> CollectionStatus:
             tar_file_results = process_tar_file(tar_file, session, location_index)
             location_index.pop()
             status.total_posts += tar_file_results.total_posts
-            status.accepted_posts += tar_file_results.accepted_posts
+            for accepted_lang, accepted_count in tar_file_results.accepted_posts.items():
+                status.accepted_posts[accepted_lang] = status.accepted_posts.setdefault(accepted_lang,
+                                                                                                          0) + accepted_count
             status.items[tar_file_date_name] = tar_file_results
 
     finally:
@@ -142,8 +148,8 @@ def process_dump(dump_path: Path, session: Session) -> CollectionStatus:
 
 def main_create_time_range_db():
     try:
-        month = 3
-        year = 2028
+        month = 1
+        year = 2022
         dump_path = get_dump_path(year, month)
         if not dump_path.exists():
             logger.error(f"dumppath {dump_path} does not exist")
@@ -160,6 +166,7 @@ def main_create_time_range_db():
     except KeyboardInterrupt:
         consider_deletion(db_path)
     except Exception as e:
+        print(traceback.format_exc())
         consider_deletion(db_path)
 
 

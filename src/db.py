@@ -5,7 +5,7 @@ from enum import Enum as PyEnum
 from pathlib import Path
 from typing import Optional, Type
 
-from sqlalchemy import String, DateTime, JSON, Integer, func, Boolean, SmallInteger
+from sqlalchemy import String, DateTime, JSON, Integer, func, Boolean, SmallInteger, Enum
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeMeta, DeclarativeBase
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -20,14 +20,19 @@ class Annot1Relevant(PyEnum):
     RELEVANT = 'r'
     NOT_RELEVANT = 'n'
     UNCERTAIN = 'u'
+    NOT_APPLICABLE = 'na'
 
 
 class Annot1Corine(PyEnum):
     ARTIFICIAL_SURFACES = "as"
     AGRICULTURAL = "ag"
-    FOREST_AND_SEMINATURAL_AREAS = "fs"
+    FOREST_AND_SEMINATURAL_AREAS = "fsn"
     WETLANDS = "wl"
     WATER_BODIES = "wb"
+    NOT_IDENTIFIABLE = "ni"
+    AMBIGUOUS = "am"
+
+
 
 
 class TimeRangeEvalEntry(Base):
@@ -97,24 +102,24 @@ class DBAnnot1Post(Base):
     year_created: Mapped[int] = mapped_column(Integer, nullable=False)
     month_created: Mapped[int] = mapped_column(Integer, nullable=False)
     day_created: Mapped[int] = mapped_column(Integer, nullable=False)
-    # hour_created: Mapped[int] = mapped_column(Integer, nullable=False)
+    hour_created: Mapped[int] = mapped_column(Integer, nullable=False)
 
     text: Mapped[str] = mapped_column(String(300))
-    contain_media: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    contains_media: Mapped[bool] = mapped_column(Boolean, nullable=True)
     post_url: Mapped[str] = mapped_column(String(60), nullable=False)
 
-    text_relevant: Mapped[bool] = mapped_column(Boolean, nullable=True)
-    text_class: Mapped[str] = mapped_column(String, nullable=True)
+    text_relevant: Mapped[Annot1Relevant] = mapped_column(Enum(Annot1Relevant), nullable=True)
+    text_class: Mapped[Annot1Corine] = mapped_column(Enum(Annot1Corine), nullable=True)
     text_notes: Mapped[str] = mapped_column(String, nullable=True)
-    media_relevant: Mapped[bool] = mapped_column(Boolean, nullable=True)
-    media_class: Mapped[str] = mapped_column(String, nullable=True)
+    media_relevant: Mapped[Annot1Relevant] = mapped_column(Enum(Annot1Relevant), nullable=True)
+    media_class: Mapped[Annot1Corine] = mapped_column(Enum(Annot1Corine), nullable=True)
     media_notes: Mapped[str] = mapped_column(String, nullable=True)
 
     def set_date_columns(self):
         self.year_created = self.date_created.year
         self.month_created = self.date_created.month
         self.day_created = self.date_created.day
-        # self.hour_created = self.date_created.hour
+        self.hour_created = self.date_created.hour
 
 
 def _get_month_short_name(month_number: int) -> str:
@@ -122,7 +127,7 @@ def _get_month_short_name(month_number: int) -> str:
     return dt.strftime("%b")
 
 
-def db_path(db_type: str, year: int, month: int, language: str = "XXX", platform: str = "twitter") -> str:
+def _db_path(db_type: str, year: int, month: int, language: str = "XXX", platform: str = "twitter") -> str:
     # jan,feb,mar, ...
     month_short_name = _get_month_short_name(month).lower()
     lang = language.ljust(3, "_")
@@ -130,13 +135,13 @@ def db_path(db_type: str, year: int, month: int, language: str = "XXX", platform
 
 
 def main_db_path(year: int, month: int, language: str = "", platform: str = "twitter") -> Path:
-    return BASE_DATA_PATH / db_path(MAIN_DB, year, month, language, platform)
+    return BASE_DATA_PATH / _db_path(MAIN_DB, year, month, language, platform)
 
 
 def annotation_db_path(year: int, month: int, language: str = "",
                        annotation_extra: str = "",
                        platform: str = "twitter") -> Path:
-    return BASE_DATA_PATH / db_path(f"{ANNOTATION_DB}_{annotation_extra}", year, month, language, platform)
+    return BASE_DATA_PATH / _db_path(f"{ANNOTATION_DB}_{annotation_extra}", year, month, language, platform)
 
 
 def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
@@ -174,6 +179,13 @@ def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
             Base.metadata.create_all(engine)
 
     return sessionmaker(engine)
+
+class DBUser(Base):
+    __tablename__ = 'user'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    id_str: Mapped[[str]] = mapped_column(String, nullable=False, unique=True)
+    content: Mapped[dict] = mapped_column(JSON, nullable=False)
+
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import bz2
 import gzip
 import io
 import tarfile
+from datetime import datetime
 from pathlib import Path
 
 from sqlalchemy.orm import DeclarativeBase
@@ -69,3 +70,7 @@ def consider_deletion(path: Path):
 
 def post_url(data: dict)-> str:
     return f"https://x.com/{data['user']['screen_name']}/status/{data['id']}"
+
+
+def post_date(ts: int|str) -> datetime:
+    return datetime.fromtimestamp(int(int(ts) / 1000))

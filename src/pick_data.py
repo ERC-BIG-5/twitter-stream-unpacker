@@ -94,6 +94,6 @@ def grab_posts_from_location(location_index: tuple[str, str, dict[str, list[int]
 
 if __name__ == '__main__':
     # thats a test...
-    #data = grab_post_from_location(("2022-03", "20220301", "20220301/20220301233400.json.gz", 3))
-    data = grab_posts_from_location(("2022-03", "20220301", {"20220301/20220301233400.json.gz": [3,4,5]}))
+    data = grab_post_from_location(("2022-01", "20220101", "20220101/20220101000000.json.gz", 36))
+    # data = grab_posts_from_location(("2022-03", "20220301", {"20220301/20220301233400.json.gz": [3,4,5]}))
     print(json.dumps(data, indent=2))
