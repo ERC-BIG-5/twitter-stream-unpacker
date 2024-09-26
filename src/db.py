@@ -1,5 +1,4 @@
 from datetime import date
-from datetime import date
 from datetime import datetime
 from enum import Enum as PyEnum
 from pathlib import Path
@@ -113,6 +112,36 @@ class DBAnnot1Post(Base):
     text_notes: Mapped[str] = mapped_column(String, nullable=True)
     media_relevant: Mapped[Annot1Relevant] = mapped_column(Enum(Annot1Relevant), nullable=True)
     media_class: Mapped[Annot1Corine] = mapped_column(Enum(Annot1Corine), nullable=True)
+    media_notes: Mapped[str] = mapped_column(String, nullable=True)
+
+    def set_date_columns(self):
+        self.year_created = self.date_created.year
+        self.month_created = self.date_created.month
+        self.day_created = self.date_created.day
+        self.hour_created = self.date_created.hour
+
+class DBAnnot1PostFLEX(Base):
+    __tablename__ = 'annot1_post_flex'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    location_index: Mapped[list] = mapped_column(JSON, nullable=False)
+    platform_id: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    date_created: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    language: Mapped[str] = mapped_column(String(5), nullable=False)
+
+    year_created: Mapped[int] = mapped_column(Integer, nullable=False)
+    month_created: Mapped[int] = mapped_column(Integer, nullable=False)
+    day_created: Mapped[int] = mapped_column(Integer, nullable=False)
+    hour_created: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    text: Mapped[str] = mapped_column(String(300))
+    contains_media: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    post_url: Mapped[str] = mapped_column(String(60), nullable=False)
+
+    text_relevant: Mapped[Annot1Relevant] = mapped_column(String(300), nullable=True)
+    text_class: Mapped[Annot1Corine] = mapped_column(String(300), nullable=True)
+    text_notes: Mapped[str] = mapped_column(String, nullable=True)
+    media_relevant: Mapped[Annot1Relevant] = mapped_column(String(300), nullable=True)
+    media_class: Mapped[Annot1Corine] = mapped_column(String(300), nullable=True)
     media_notes: Mapped[str] = mapped_column(String, nullable=True)
 
     def set_date_columns(self):
