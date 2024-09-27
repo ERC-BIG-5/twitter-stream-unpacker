@@ -21,7 +21,8 @@ def check_contains_media(post: dict) -> Optional[bool]:
         return None
 
 
-def create_annot1(post: dict) -> DBAnnot1Post:
+def create_annot1(post: dict,
+                  location_index: Optional[tuple[str, str, str, int]] = None) -> DBAnnot1Post:
     db_post = DBAnnot1Post(
         post_url=post_url(post),
         location_index=[],  # todo, pass with the rest
@@ -32,13 +33,14 @@ def create_annot1(post: dict) -> DBAnnot1Post:
         contains_media=check_contains_media(post)
     )
     db_post.set_date_columns()
+    db_post.location_index = location_index
     return db_post
+
 
 def create_annot1_from_post(post: DBPost) -> DBAnnot1Post:
     db_post = create_annot1(post.content)
     db_post.location_index = post.location_index
     return db_post
-
 
 
 def create_many_annot1(posts: list[dict]) -> list[DBAnnot1Post]:
@@ -103,7 +105,7 @@ def create_annot1_test_from_complete(year: int, month: int, languages: set[str])
                         exists_already = annot_session.execute(select(DBAnnot1Post).where(
                             DBAnnot1Post.day_created == day,
                             DBAnnot1Post.language == lang,
-                        DBAnnot1Post.hour_created == hour)).one_or_none()
+                            DBAnnot1Post.hour_created == hour)).one_or_none()
                         if exists_already:
                             continue
                         check_existing = False

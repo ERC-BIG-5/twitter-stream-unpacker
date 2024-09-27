@@ -7,6 +7,12 @@ Currently, we are doing 4 annotations for a month (+2 for notes)
 text, media - relevant, class (corine classification)
 For this we use the annotation_extra "1" when handling databases and files 
 
+## postgres
+
+We can create a db and a user with all rights to it for a labelstudio db.
+
+##
+
 
 this repo processes Twitter Stream grabs from
 https://archive.org/details/twitterstream

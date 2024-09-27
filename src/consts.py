@@ -63,3 +63,5 @@ if not logger.handlers:
     logger.setLevel(CONFIG.LOG_LEVEL)
     file_handler.setLevel(CONFIG.FILE_LOG_LEVEL)
 
+ANNOT_EXTRA_TEST_ROUND = "1"
+ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
