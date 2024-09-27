@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.sql.functions import session_user
 
 from src.consts import CONFIG, logger
-from src.db import DBPost, DBUser
+from src.db.models import DBPost, DBUser
 
 
 def create_main_db_entry(data: dict, location_index: list[str], time_range_index: int) -> DBPost:

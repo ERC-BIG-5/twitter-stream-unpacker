@@ -8,7 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.consts import LABELSTUDIO_TASK_PATH, logger
-from src.db import annotation_db_path, init_db, DBAnnot1Post
+from src.db.db import annotation_db_path, init_db
+from src.db.models import DBAnnot1Post
 
 
 @dataclass
