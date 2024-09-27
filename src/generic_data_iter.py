@@ -6,31 +6,33 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from random import random
-from typing import Callable, Optional
+from typing import Callable, Optional, cast
 
 import jsonlines
 from sqlalchemy.orm import Session
 from tqdm import tqdm
 
 from src.consts import logger
-from src.create_anon_entries import create_annot1
-from src.db import init_db, annotation_db_path, DBAnnot1Post
+from deprecated.create_anon_entries import create_annot1
+from src.db.db import init_db, annotation_db_path
+from src.db.models import DBAnnot1Post
 from src.json_schema_builder import build_schema
 from src.post_filter import check_original_tweet
 from src.util import get_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data, post_date
 
 TESTMODE = False
 
+locationindex_type = tuple[str,str, str, int]
 
 def generic_process_jsonl_entry(jsonl_entry: dict,
-                                location_index: list[str],
-                                generic_func: Callable[[dict, tuple[str, str, str, int]], None]) -> None:
+                                location_index: locationindex_type,
+                                generic_func: Callable[[dict, locationindex_type], None]) -> None:
     if "data" in jsonl_entry:
         data = jsonl_entry["data"]
     else:  # 2022-01,02
         data = jsonl_entry
 
-    generic_func(data, tuple(location_index))
+    generic_func(data, location_index)
     return None
 
 
@@ -43,7 +45,7 @@ def generic_process_jsonl_file(jsonl_file_data: bytes,
         location_index.append(entries_count)
         entries_count += 1
         # language and original tweet filter
-        generic_process_jsonl_entry(jsonl_entry, location_index.copy(), generic_func)
+        generic_process_jsonl_entry(jsonl_entry, cast(locationindex_type,location_index.copy()), generic_func)
         location_index.pop()
 
 
