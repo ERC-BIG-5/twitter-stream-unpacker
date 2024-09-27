@@ -1,5 +1,13 @@
 # Twitter Stream Grab processing
 
+## Annotation tasks
+
+Currently, we are doing 4 annotations for a month (+2 for notes)
+
+text, media - relevant, class (corine classification)
+For this we use the annotation_extra "1" when handling databases and files 
+
+
 this repo processes Twitter Stream grabs from
 https://archive.org/details/twitterstream
 Each torrent results in a folder for each month
