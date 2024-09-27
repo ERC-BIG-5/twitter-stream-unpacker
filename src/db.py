@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, DeclarativeMeta, DeclarativeBa
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy_utils import create_database
 
-from consts import BASE_DATA_PATH, CONFIG, logger, MAIN_DB, ANNOTATION_DB
+from src.consts import BASE_DATA_PATH, CONFIG, logger, MAIN_DB, ANNOTATION_DB
 
 Base: DeclarativeMeta = declarative_base()
 

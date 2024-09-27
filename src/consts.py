@@ -2,8 +2,9 @@ import logging
 from dataclasses import field
 from logging import getLogger, StreamHandler, Formatter, FileHandler
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
@@ -12,7 +13,7 @@ BASE_STAT_PATH = BASE_DATA_PATH / "stats"
 LABELSTUDIO_TASK_PATH = BASE_DATA_PATH / "labelstudio_tasks"
 ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
 
-ENV_FILE_PATH = Path("../.env")
+ENV_FILE_PATH = PROJECT_PATH / ".env"
 
 MAIN_DB = "MAIN"
 ANNOTATION_DB = "ANNO"
@@ -43,7 +44,8 @@ class Config(BaseSettings):
     # generic
     LOG_LEVEL: Literal["INFO","DEBUG","WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO","DEBUG","WARNING", "ERROR", "CRITICAL"] = "INFO"
-
+    #
+    PG_PASSWORD: Optional[SecretStr] = None
 
 CONFIG = Config()
 
@@ -60,3 +62,4 @@ if not logger.handlers:
 
     logger.setLevel(CONFIG.LOG_LEVEL)
     file_handler.setLevel(CONFIG.FILE_LOG_LEVEL)
+
