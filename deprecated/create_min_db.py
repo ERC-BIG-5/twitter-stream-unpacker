@@ -2,7 +2,8 @@ import calendar
 from datetime import datetime, timedelta
 
 from src.consts import logger, CONFIG
-from src.db import main_db_path, init_db, annotation_db_path, DBPost
+from src.db.db import main_db_path, init_db, annotation_db_path
+from src.db.models import DBPost
 from sqlalchemy import select, extract, and_
 from sqlalchemy.orm import Session
 from tqdm import tqdm

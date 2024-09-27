@@ -9,8 +9,9 @@ from sqlalchemy.orm import Session
 from tqdm import tqdm
 
 from src.consts import logger, CONFIG
-from src.db import main_db_path, init_db, DBPost
-from src.db_funcs import consider_drop_table
+from src.db.db import main_db_path, init_db
+from src.db.models import DBPost
+from src.db.db_funcs import consider_drop_table
 from src.post_filter import check_original_tweet
 from src.util import get_dump_path, consider_deletion, iter_tar_files, tarfile_datestr, iter_jsonl_files_data, post_url
 
