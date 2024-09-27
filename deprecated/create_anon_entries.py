@@ -7,9 +7,10 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from tqdm import tqdm
 
-from src.collect_from_time_range_table import get_first_tweets_by_hour
+from deprecated.collect_from_time_range_table import get_first_tweets_by_hour
 from src.consts import BASE_DATA_PATH, logger
-from src.db import DBAnnot1Post, DBPost, init_db, main_db_path, annotation_db_path
+from src.db.db import init_db, main_db_path, annotation_db_path
+from src.db.models import DBPost, DBAnnot1Post
 from src.util import post_url, post_date
 
 

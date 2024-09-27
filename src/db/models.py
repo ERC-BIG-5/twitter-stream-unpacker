@@ -1,16 +1,8 @@
-from datetime import date
 from datetime import datetime
 from enum import Enum as PyEnum
-from pathlib import Path
-from typing import Optional, Type
 
-from sqlalchemy import String, DateTime, JSON, Integer, func, Boolean, SmallInteger, Enum
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeMeta, DeclarativeBase
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy_utils import create_database
-
-from src.consts import BASE_DATA_PATH, CONFIG, logger, MAIN_DB, ANNOTATION_DB
+from sqlalchemy import String, DateTime, JSON, SmallInteger, func, Integer, Boolean, Enum
+from sqlalchemy.orm import DeclarativeMeta, declarative_base, Mapped, mapped_column
 
 Base: DeclarativeMeta = declarative_base()
 
@@ -30,8 +22,6 @@ class Annot1Corine(PyEnum):
     WATER_BODIES = "wb"
     NOT_IDENTIFIABLE = "ni"
     AMBIGUOUS = "am"
-
-
 
 
 class TimeRangeEvalEntry(Base):
@@ -120,6 +110,7 @@ class DBAnnot1Post(Base):
         self.day_created = self.date_created.day
         self.hour_created = self.date_created.hour
 
+
 class DBAnnot1PostFLEX(Base):
     __tablename__ = 'annot1_post_flex'
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -151,74 +142,8 @@ class DBAnnot1PostFLEX(Base):
         self.hour_created = self.date_created.hour
 
 
-def _get_month_short_name(month_number: int) -> str:
-    dt = date(year=1, day=1, month=month_number)
-    return dt.strftime("%b")
-
-
-def _db_path(db_type: str, year: int, month: int, language: str = "XXX", platform: str = "twitter") -> str:
-    # jan,feb,mar, ...
-    month_short_name = _get_month_short_name(month).lower()
-    lang = language.ljust(3, "_")
-    return f'{db_type}_{year}_{month_short_name}_{lang}_{platform}.sqlite'
-
-
-def main_db_path(year: int, month: int, language: str = "", platform: str = "twitter") -> Path:
-    return BASE_DATA_PATH / _db_path(MAIN_DB, year, month, language, platform)
-
-
-def annotation_db_path(year: int, month: int, language: str = "",
-                       annotation_extra: str = "",
-                       platform: str = "twitter") -> Path:
-    return BASE_DATA_PATH / _db_path(f"{ANNOTATION_DB}_{annotation_extra}", year, month, language, platform)
-
-
-def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
-            new: bool = False, tables: Optional[list[Type[DeclarativeBase]]] = None) -> sessionmaker:
-    """
-
-    :param db_path:
-    :param read_only: DB MUST EXIST
-    :return:
-    """
-    # ask for removal of db file, if config is True
-    if new and db_path.exists():
-        raise Exception(f"DB already exists: {db_path}")
-    if (CONFIG.RESET_DB or reset) and db_path.exists():
-        delete_resp = input(f"Do you want to delete the db"
-                            f"{db_path}? : y/ other key\n")
-        if delete_resp == "y":
-            logger.info(f"deleting: {db_path}")
-            db_path.unlink()
-
-    db_uri = db_path.as_posix()
-    if read_only:
-        pass  # todo did not work, but added ?mode=ro to name
-        # db_uri += "?mode=ro&uri=true"
-        if not Path(db_uri).exists():
-            raise FileNotFoundError(f"DB file does not exist: {db_uri}")
-
-    logger.info(f"init db: {db_uri}")
-    engine = create_engine(f'sqlite:///{db_uri}')
-    if not db_path.exists():
-        create_database(engine.url)
-        if tables:
-            Base.metadata.create_all(engine, tables=[cls.__table__ for cls in tables])
-        else:
-            Base.metadata.create_all(engine)
-
-    return sessionmaker(engine)
-
 class DBUser(Base):
     __tablename__ = 'user'
     id: Mapped[int] = mapped_column(primary_key=True)
     id_str: Mapped[[str]] = mapped_column(String, nullable=False, unique=True)
     content: Mapped[dict] = mapped_column(JSON, nullable=False)
-
-
-
-if __name__ == "__main__":
-    init_db(annotation_db_path(2022, 1, "en", annotation_extra="1"),
-            reset=True,
-            tables=[DBAnnot1Post]
-            )
