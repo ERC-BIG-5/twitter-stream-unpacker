@@ -32,20 +32,23 @@ class Config(BaseSettings):
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
     LANGUAGES: list[str] = ["en", "es", "pt", "it", "de", "fr", "zxx"]
     # todo, remove that...
-    ONLY_ORIG_TWEETS: bool = field(default=True, metadata={"description": "Filtes out comments, retweets, quoted retweets..."}) # for main
-    MAX_POSTS_PER_TIME_RANGE:int = 50
-    RESET_DB: bool = False # for main
-    DUMP_THRESH: int = 2000 # for main, and create_min
-    STORE_COMPLETE_CONTENT: bool = True # for main
-    DB_LANGUAGE_SPLIT: bool = False
+    ONLY_ORIG_TWEETS: bool = field(default=True, metadata={
+        "description": "Filters out comments, retweets, quoted retweets..."})  # for main
+    MAX_POSTS_PER_TIME_RANGE: int = 50
+    RESET_DB: bool = False  # for main
+    DUMP_THRESH: int = 2000  # for main, and create_min, DEPRECATED
+    STORE_COMPLETE_CONTENT: bool = True  # for main, DEPRECATED
+    TESTMODE = False  #
     # MIN DBS
-    YEAR: int = 2022
-    MONTH: int = 2
+    DB_LANGUAGE_SPLIT: bool = False
+    YEAR: int = 2022,  # DEPRECATED
+    MONTH: int = 2  # DEPRECATED
     # generic
-    LOG_LEVEL: Literal["INFO","DEBUG","WARNING", "ERROR", "CRITICAL"] = "INFO"
-    FILE_LOG_LEVEL: Literal["INFO","DEBUG","WARNING", "ERROR", "CRITICAL"] = "INFO"
-    #
+    LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    # for something else,... setting up a pg db
     PG_PASSWORD: Optional[SecretStr] = None
+
 
 CONFIG = Config()
 
@@ -65,3 +68,7 @@ if not logger.handlers:
 
 ANNOT_EXTRA_TEST_ROUND = "1"
 ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
+
+# this is for the simple_generic_iter
+
+locationindex_type = tuple[str, str, str, int]

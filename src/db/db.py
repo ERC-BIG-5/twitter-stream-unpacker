@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional, Type
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database
 
@@ -34,7 +34,7 @@ def annotation_db_path(year: int, month: int, language: str = "",
 
 
 def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
-            new: bool = False, tables: Optional[list[Type[DeclarativeBase]]] = None) -> sessionmaker:
+            new: bool = False, tables: Optional[set[Type[DeclarativeBase]]] = None) -> sessionmaker:
     """
 
     :param db_path:
@@ -70,8 +70,12 @@ def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
     return sessionmaker(engine)
 
 
+def strict_init_annot_db_get_session(db_path: Path) -> Session:
+    return init_db(db_path, reset=True, tables={DBAnnot1Post})()
+
+
 if __name__ == "__main__":
     init_db(annotation_db_path(2022, 1, "en", annotation_extra="1"),
             reset=True,
-            tables=[DBAnnot1Post]
+            tables={DBAnnot1Post}
             )
