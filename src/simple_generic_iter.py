@@ -5,7 +5,7 @@ from typing import Callable, cast, Optional
 import jsonlines
 from tqdm import tqdm
 
-from src.consts import logger, TESTMODE, locationindex_type
+from src.consts import logger, locationindex_type, CONFIG
 from src.util import get_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data
 
 
@@ -57,7 +57,7 @@ def generic_process_dump(dump_path: Path, generic_func: Callable[[dict, tuple[st
         # process tar file
         generic_process_tar_file(tar_file, location_index, generic_func)
         location_index.pop()
-        if TESTMODE:
+        if CONFIG.TESTMODE:
             break
 
 
