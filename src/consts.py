@@ -38,10 +38,10 @@ class Config(BaseSettings):
     RESET_DB: bool = False  # for main
     DUMP_THRESH: int = 2000  # for main, and create_min, DEPRECATED
     STORE_COMPLETE_CONTENT: bool = True  # for main, DEPRECATED
-    TESTMODE = False  #
+    TESTMODE:bool = False  #
     # MIN DBS
     DB_LANGUAGE_SPLIT: bool = False
-    YEAR: int = 2022,  # DEPRECATED
+    YEAR: int = 2022  # DEPRECATED
     MONTH: int = 2  # DEPRECATED
     # generic
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
