@@ -4,14 +4,11 @@ import io
 import tarfile
 from datetime import datetime
 from pathlib import Path
-
-from sqlalchemy.orm import DeclarativeBase
-
-from consts import logger, CONFIG
-from pathlib import Path
 from typing import Generator
 
 from jsonlines import jsonlines
+
+from consts import logger, CONFIG
 
 
 def get_dump_path(year: int, month: int)-> Path:
