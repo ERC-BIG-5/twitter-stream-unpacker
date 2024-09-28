@@ -1,12 +1,23 @@
 import datetime
 import json
 import os
+from pathlib import Path
 
 import label_studio_sdk as ls_sdk
 from dotenv import load_dotenv
 from label_studio_sdk.client import LabelStudio
 
-from src.consts import LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH, CONFIG
+BASE_DATA_PATH = Path("data")
+BASE_LABEL_CONFIGS_PATH = BASE_DATA_PATH / "label_configs"
+BASE_GENERATED_PROJECTS_PATH = BASE_DATA_PATH / "generated_projects"
+GENERATED_PROJECTS_INFO_PATH = BASE_GENERATED_PROJECTS_PATH / "info.json"
+
+for p in [BASE_DATA_PATH, BASE_LABEL_CONFIGS_PATH, BASE_GENERATED_PROJECTS_PATH]:
+    if not p.exists():
+        p.mkdir()
+
+if not GENERATED_PROJECTS_INFO_PATH.exists():
+    GENERATED_PROJECTS_INFO_PATH.write_text("[]", encoding="utf-8")
 
 
 def create_api_client() -> LabelStudio:
@@ -14,8 +25,9 @@ def create_api_client() -> LabelStudio:
     from label_studio_sdk.client import LabelStudio
 
     # Connect to the Label Studio API and check the connection
-    ls_client = LabelStudio(base_url=CONFIG.LS_BASE_URL,
-                            api_key=CONFIG.LABELSTUDIO_ACCESS_TOKEN)
+    ls_base_uri = os.environ.get("LS_BASE_URL", "http://localhost:8080/")
+    access_token = os.environ.get("LABELSTUDIO_ACCESS_TOKEN")
+    ls_client = LabelStudio(base_url=ls_base_uri, api_key=access_token)
     return ls_client
 
 
@@ -33,12 +45,12 @@ def create_project(platform: str,
                    label_config_name: str,
                    api_client: LabelStudio):
     title = project_title(platform, year, month, language, annotation_extra)
-    label_config = (LABELSTUDIO_LABEL_CONFIGS_PATH / label_config_name).read_text(encoding="utf-8")
+    label_config = (BASE_LABEL_CONFIGS_PATH / label_config_name).read_text(encoding="utf-8")
     project_data = api_client.projects.create(title=title, label_config=label_config, maximum_annotations=20)
 
     projects_info = json.load(GENERATED_PROJECTS_INFO_PATH.open(encoding="utf-8"))
     projects_info.append(project_data.dict())
-    json.dump(projects_info, GENERATED_PROJECTS_INFO_PATH.open("w", encoding="utf-8"), ensure_ascii=False)
+    json.dump(projects_info, GENERATED_PROJECTS_INFO_PATH.open("w",encoding="utf-8"), ensure_ascii=False)
     return project_data
 
 
