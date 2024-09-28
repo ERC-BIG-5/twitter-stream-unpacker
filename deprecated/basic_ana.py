@@ -1,11 +1,10 @@
-import json
+from collections import Counter
 from collections import Counter
 from collections.abc import Callable
 from pathlib import Path
-from random import choice, choices
+from random import choices
 from typing import Any
 
-import orjson
 from jsonlines import jsonlines
 from tqdm import tqdm
 
