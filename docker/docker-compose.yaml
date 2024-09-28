@@ -1,0 +1,40 @@
+services:
+  label-studio:
+    image: heartexlabs/label-studio:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./labelstudio_data:/label-studio/data
+      - ./labelstudio_data/sm_imports:/label-studio/data/sm_imports
+    depends_on:
+      - db
+    environment:
+      - LABEL_STUDIO_USERNAME=cci@aa.com
+      - LABEL_STUDIO_PASSWORD=cccas3f
+      - LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK=true
+      - LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true
+      - LABEL_STUDIO_BASE_DATA_DIR=/label-studio/data
+      - LABEL_STUDIO_DATABASE=postgres
+      - DJANGO_DB=default
+      - POSTGRE_NAME=labelstudio
+      - POSTGRE_USER=labelstudio
+      - POSTGRE_PASSWORD=labelstudiopassword
+      - POSTGRE_HOST=db
+      - POSTGRE_PORT=5432
+      - LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT=/label-studio/data/sm_imports
+    user: "${UID}:${GID}"
+
+  db:
+    image: postgres:13
+    volumes:
+      - ./postgresql_data:/var/lib/postgresql/data
+      - ./init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgresql_data:
