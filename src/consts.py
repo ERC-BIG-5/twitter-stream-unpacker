@@ -9,9 +9,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
 BASE_DATA_PATH = PROJECT_PATH / "data"
+BASE_DBS_PATH = BASE_DATA_PATH / "data"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
 LABELSTUDIO_TASK_PATH = BASE_DATA_PATH / "labelstudio_tasks"
 ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
+LOGS_BASE_PATH = BASE_DATA_PATH / "logs"
+
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_STAT_PATH, LABELSTUDIO_TASK_PATH, ANNOTATED_BASE_PATH,LOGS_BASE_PATH]:
+    p.mkdir(parents=True, exist_ok=True)
 
 ENV_FILE_PATH = PROJECT_PATH / ".env"
 
@@ -19,9 +24,6 @@ MAIN_DB = "MAIN"
 ANNOTATION_DB = "ANNO"
 
 ## LOGGER
-file_logs_path = BASE_DATA_PATH / "logs"
-file_logs_path.mkdir(exist_ok=True)
-
 logger = getLogger("twitter-stream-unpacker")
 
 
@@ -59,7 +61,7 @@ if not logger.handlers:
     handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
     logger.addHandler(handler)
 
-    file_handler = FileHandler(file_logs_path / "logs.txt")
+    file_handler = FileHandler(LOGS_BASE_PATH / "logs.txt")
     file_handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
     logger.addHandler(file_handler)
 

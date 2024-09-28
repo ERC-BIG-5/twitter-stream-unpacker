@@ -5,14 +5,13 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-import src.consts
 from deprecated.create_anon_entries import create_annot1
 from src.consts import CONFIG, logger, ANNOT_EXTRA_TEST_ROUND_EXPERIMENT
-from src.db.db import init_db, annotation_db_path, strict_init_annot_db_get_session
-from src.db.models import DBAnnot1Post
+from src.db.db import annotation_db_path, strict_init_annot_db_get_session
 from src.post_filter import check_original_tweet
 from src.simple_generic_iter import main_generic_all_data
 from src.util import post_date
+
 
 @dataclass
 class AnnotCollectionEntry:
@@ -34,10 +33,12 @@ class AnnotPostCollection:
                 self._col[lang][day] = {i: None
                                         for i in range(0, 24)
                                         }
-            self._language_sessions[lang] = strict_init_annot_db_get_session(annotation_db_path(year,
-                                                                                                month,
-                                                                                                lang,
-                                                                                                annot_extr))
+            # DBS
+            self._language_sessions[lang] = strict_init_annot_db_get_session(
+                annotation_db_path(year,
+                                   month,
+                                   lang,
+                                   annot_extr))
 
     def add_post(self, post_data: dict, location_index: tuple[str, str, str, int]):
         post_date_ = post_date(post_data['timestamp_ms'])
