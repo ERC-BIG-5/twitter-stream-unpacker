@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from enum import Enum
 from pathlib import Path
 
 import sqlalchemy
@@ -7,7 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.consts import ANNOTATED_BASE_PATH
-from src.db import annotation_db_path, init_db, Annot1Relevant, DBAnnot1PostFLEX, Annot1Corine
+from src.db.db import annotation_db_path, init_db
+from src.db.models import Annot1Relevant, Annot1Corine, DBAnnot1PostFLEX
 
 
 def get_annotation_folder(year: int, month: int, language: str, annotation_extra: str = "") -> Path:
@@ -36,7 +36,7 @@ annot_groups = [("text_relevant", Annot1Relevant),
                 ("media_class", Annot1Corine)]
 
 
-def analyse_ds(year: int, month: int, language: str, annotation_extra):
+def prepare_sqlite_annotations(year: int, month: int, language: str, annotation_extra) -> dict[str, RowResult]:
     dbs: list[Path] = get_analysed_files(year, month, language, annotation_extra)
 
     # coder, rows
@@ -86,37 +86,3 @@ def analyse_ds(year: int, month: int, language: str, annotation_extra):
 
         # print(broken_rows)
     return results
-
-
-def calc_agreements(ana_ds: dict[str, RowResult]):
-    from src.annot_analysis.agreements import calculate_fleiss_kappa
-    agreements = {}
-    ana_ds_list = list(ana_ds.values())
-    for col, ec in annot_groups:
-        agreements[col] = calculate_fleiss_kappa(ana_ds_list, col, ec)
-
-    def interpretation_str(value: float) -> str:
-        if value < 0:
-            return "Poor aggreement"
-        elif value < 0.2:
-            return "Slight agreement"
-        elif value < 0.4:
-            return "Fair agreement"
-        elif value < 0.6:
-            return "Moderate agreement"
-        elif value < 0.8:
-            return "Substantial agreement"
-        else:
-            return "Almost perfect agreement"
-
-    for k, v in agreements.items():
-        agreements[k] = {"value": v, "interpretation": interpretation_str(v)}
-    return agreements
-
-
-if __name__ == "__main__":
-    results = analyse_ds(2022, 1, "en", "1")
-    # print(results)
-    print(calc_agreements(results))
-
-    # print(calculate_fleiss_kappa(list(results.values())[:5], "text_relevant", Annot1Relevant))
