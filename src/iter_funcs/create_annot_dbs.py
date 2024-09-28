@@ -7,12 +7,13 @@ from sqlalchemy.orm import Session
 
 import src.consts
 from deprecated.create_anon_entries import create_annot1
-from src.consts import CONFIG, logger, ANNOT_EXTRA_TEST_ROUND_EXPERIMENT
-from src.db.db import init_db, annotation_db_path, strict_init_annot_db_get_session
+from src.consts import CONFIG, logger
+from src.db.db import init_db, annotation_db_path
 from src.db.models import DBAnnot1Post
 from src.post_filter import check_original_tweet
 from src.simple_generic_iter import main_generic_all_data
 from src.util import post_date
+
 
 @dataclass
 class AnnotCollectionEntry:
@@ -23,7 +24,7 @@ class AnnotCollectionEntry:
 
 class AnnotPostCollection:
 
-    def __init__(self, languages: set[str], year: int, month: int, annot_extr: str):
+    def __init__(self, languages: set[str], year: int, month: int):
         self._col: dict[str, dict[int, dict[int, Optional[AnnotCollectionEntry]]]] = {}
         self._language_sessions: dict[str, Session] = {}
 
@@ -34,10 +35,11 @@ class AnnotPostCollection:
                 self._col[lang][day] = {i: None
                                         for i in range(0, 24)
                                         }
-            self._language_sessions[lang] = strict_init_annot_db_get_session(annotation_db_path(year,
-                                                                                                month,
-                                                                                                lang,
-                                                                                                annot_extr))
+            self._language_sessions[lang] = init_db(annotation_db_path(year,
+                                                                       month,
+                                                                       lang,
+                                                                       "1x"),
+                                                    tables=[DBAnnot1Post])()
 
     def add_post(self, post_data: dict, location_index: tuple[str, str, str, int]):
         post_date_ = post_date(post_data['timestamp_ms'])
@@ -71,10 +73,10 @@ class AnnotPostCollection:
             session.close()
 
 
-def create_anont_dbs(year: int, month: int, languages: set[str], annot_extr: str):
+def create_anont_dbs(year: int, month: int, languages: set[str]):
     if CONFIG.TESTMODE:
         logger.info("Running TEST-MODE, aborting after one tar file")
-    post_collection = AnnotPostCollection(languages, year, month, annot_extr)
+    post_collection = AnnotPostCollection(languages, year, month)
 
     def insert_post(post_data: dict, location_index: tuple[str, str, str, int]):
         if not check_original_tweet(post_data):
@@ -93,7 +95,3 @@ def create_anont_dbs(year: int, month: int, languages: set[str], annot_extr: str
     import subprocess
     subprocess.run(["shutdown", "-h", "now"])
     """
-
-
-if __name__ == "__main__":
-    create_anont_dbs(2022, 1, {"en", "es"}, ANNOT_EXTRA_TEST_ROUND_EXPERIMENT)
