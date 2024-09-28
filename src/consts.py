@@ -11,6 +11,7 @@ PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
 BASE_DATA_PATH = PROJECT_PATH / "data"
 BASE_DBS_PATH = BASE_DATA_PATH / "data"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
+MAIN_STATUS_FILE_PATH = BASE_DATA_PATH / "status.json"
 
 ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
 LOGS_BASE_PATH = BASE_DATA_PATH / "logs"
@@ -90,3 +91,4 @@ ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
 # this is for the simple_generic_iter
 
 locationindex_type = tuple[str, str, str, int]
+
