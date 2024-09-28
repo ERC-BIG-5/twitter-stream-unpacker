@@ -1,5 +1,17 @@
 # Twitter Stream Grab processing
 
+## data folders
+
+### annotated:
+main folder for annotated sqlite dbs
+
+### labelstudio_tasks
+main folder for labelstudio tasks files
+
+### stats
+stats folder,e.g. count per language
+
+
 ## Annotation tasks
 
 Currently, we are doing 4 annotations for a month (+2 for notes)

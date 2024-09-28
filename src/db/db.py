@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database
 
-from src.consts import BASE_DATA_PATH, CONFIG, logger, MAIN_DB, ANNOTATION_DB
+from src.consts import CONFIG, logger, MAIN_DB, ANNOTATION_DB, BASE_DBS_PATH
 from src.db.models import Base, DBAnnot1Post
 
 
@@ -24,13 +24,13 @@ def _db_path(db_type: str, year: int, month: int, language: str = "XXX", platfor
 
 
 def main_db_path(year: int, month: int, language: str = "", platform: str = "twitter") -> Path:
-    return BASE_DATA_PATH / _db_path(MAIN_DB, year, month, language, platform)
+    return BASE_DBS_PATH / _db_path(MAIN_DB, year, month, language, platform)
 
 
 def annotation_db_path(year: int, month: int, language: str = "",
                        annotation_extra: str = "",
                        platform: str = "twitter") -> Path:
-    return BASE_DATA_PATH / _db_path(f"{ANNOTATION_DB}_{annotation_extra}", year, month, language, platform)
+    return BASE_DBS_PATH / _db_path(f"{ANNOTATION_DB}_{annotation_extra}", year, month, language, platform)
 
 
 def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
@@ -73,6 +73,10 @@ def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
 def strict_init_annot_db_get_session(db_path: Path) -> Session:
     return init_db(db_path, reset=True, tables={DBAnnot1Post})()
 
+def check_annot_db_exists(year: int, month: int, language: str = "",
+                       annotation_extra: str = "",
+                       platform: str = "twitter")-> bool:
+    return annotation_db_path(year, month, language, annotation_extra, platform).exists()
 
 if __name__ == "__main__":
     init_db(annotation_db_path(2022, 1, "en", annotation_extra="1"),
