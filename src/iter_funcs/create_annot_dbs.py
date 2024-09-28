@@ -5,7 +5,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from deprecated.create_anon_entries import create_annot1
+from deprecated_modules.create_anon_entries import create_annot1
 from src.consts import CONFIG, logger, ANNOT_EXTRA_TEST_ROUND_EXPERIMENT
 from src.db.db import annotation_db_path, strict_init_annot_db_get_session
 from src.post_filter import check_original_tweet

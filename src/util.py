@@ -8,17 +8,15 @@ from typing import Generator
 
 from jsonlines import jsonlines
 
-from src.consts import logger, CONFIG
+from consts import logger, CONFIG
 
 
-def get_dump_path(year: int, month: int) -> Path:
-    return CONFIG.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{year}-{str(month).rjust(2, '0')}"
+def get_dump_path(year: int, month: int)-> Path:
+    return CONFIG.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{year}-{str(month).rjust(2,'0')}"
 
 
-def iter_tar_files(path: Path) -> Generator[Path, None, None]:
-    for p in sorted(path.glob("twitter-stream-*.tar")):
-        yield p
-
+def iter_tar_files(path: Path)-> Generator[Path, None, None]:
+    return path.glob("twitter-stream-*.tar")
 
 def list_jsonl_file(path: Path) -> Generator[Path, None, None]:
     return path.glob("*.jsonl")
@@ -26,6 +24,7 @@ def list_jsonl_file(path: Path) -> Generator[Path, None, None]:
 
 def tarfile_datestr(tar_file: Path) -> str:
     return tar_file.name.lstrip("twitter-stream-").rstrip(".tar")
+
 
 
 def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, None]:
@@ -57,6 +56,7 @@ def iter_jsonl_file(fp: Path) -> Generator[dict, None, None]:
             yield line
 
 
+
 def consider_deletion(path: Path):
     delete_resp = input(f"Do you want to delete the file"
                         f"{path}? : y/ other key\n")
@@ -65,13 +65,9 @@ def consider_deletion(path: Path):
         path.unlink()
 
 
-def post_url(data: dict) -> str:
+def post_url(data: dict)-> str:
     return f"https://x.com/{data['user']['screen_name']}/status/{data['id']}"
 
 
-def post_date(ts: int | str) -> datetime:
+def post_date(ts: int|str) -> datetime:
     return datetime.fromtimestamp(int(int(ts) / 1000))
-
-
-def year_month_str(year: int, month: int) -> str:
-    return f"{year:04d}-{month:02d}"
