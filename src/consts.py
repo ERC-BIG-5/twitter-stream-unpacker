@@ -11,12 +11,25 @@ PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
 BASE_DATA_PATH = PROJECT_PATH / "data"
 BASE_DBS_PATH = BASE_DATA_PATH / "data"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
-LABELSTUDIO_TASK_PATH = BASE_DATA_PATH / "labelstudio_tasks"
+
 ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
 LOGS_BASE_PATH = BASE_DATA_PATH / "logs"
 
-for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_STAT_PATH, LABELSTUDIO_TASK_PATH, ANNOTATED_BASE_PATH,LOGS_BASE_PATH]:
+BASE_LABELSTUDIO_DATA_PATH = BASE_DATA_PATH / "labelstudio"
+LABELSTUDIO_TASK_PATH = BASE_LABELSTUDIO_DATA_PATH / "labelstudio_tasks"
+LABELSTUDIO_LABEL_CONFIGS_PATH = BASE_LABELSTUDIO_DATA_PATH / "label_configs"
+#BASE_GENERATED_PROJECTS_PATH = BASE_DATA_PATH / "generated_projects"
+GENERATED_PROJECTS_INFO_PATH = BASE_LABELSTUDIO_DATA_PATH / "info.json"
+
+
+
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_STAT_PATH, LABELSTUDIO_TASK_PATH, ANNOTATED_BASE_PATH,LOGS_BASE_PATH,
+          BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_TASK_PATH,LABELSTUDIO_LABEL_CONFIGS_PATH]:
     p.mkdir(parents=True, exist_ok=True)
+
+if not GENERATED_PROJECTS_INFO_PATH.exists():
+    GENERATED_PROJECTS_INFO_PATH.write_text("[]", encoding="utf-8")
+
 
 ENV_FILE_PATH = PROJECT_PATH / ".env"
 
@@ -50,6 +63,9 @@ class Config(BaseSettings):
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     # for something else,... setting up a pg db
     PG_PASSWORD: Optional[SecretStr] = None
+    # LABLESTUDIO
+    LS_BASE_URL: Optional[str] = "http://localhost:8080/"
+    LABELSTUDIO_ACCESS_TOKEN: Optional[str] = None
 
 
 CONFIG = Config()
