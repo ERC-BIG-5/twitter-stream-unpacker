@@ -68,7 +68,6 @@ class StatsCollectionMethod(IterationMethod):
 
     def finalize(self):
         for tar_file, tar_file_stats in self.stats.items.items():
-            print(tar_file)
             for jsonl_file, jsonl_file_stats in tar_file_stats.items.items():
                 tar_file_stats.total_posts += jsonl_file_stats.total_posts
                 tar_file_stats.accepted_posts += jsonl_file_stats.accepted_posts
@@ -126,7 +125,6 @@ class IndexEntriesDB(IterationMethod):
                     session.commit()
                     self.index_entries[lang].clear()
 
-    #
 
     def finalize(self):
         for lang in self._language_sessionmakers:
@@ -159,21 +157,6 @@ class AnnotationDBMethod(IterationMethod):
         self.post_collection.validate()
         self.post_collection.finalize_dbs()
 
-
-# def main(year: int, month: int, languages: set[str], annotation_extra: str):
-#     post_collection = AnnotPostCollection(languages, year, month, annotation_extra)
-#
-#     # status: CollectionStatus = process_dump(dump_path, session)
-#
-#     def insert_post(post_data: dict, location_index: tuple[str, str, str, int]):
-#         if not check_original_tweet(post_data):
-#             return
-#         # post = create_annot1(data)
-#         if post_data["lang"] not in languages:
-#             return
-#         post_collection.add_post(post_data, location_index)
-#
-#     main_generic_all_data(insert_post)
 
 
 def main(year: int, month: int, languages: set[str], annotation_extra: str):
