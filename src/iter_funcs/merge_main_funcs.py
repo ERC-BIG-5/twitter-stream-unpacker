@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from src.consts import locationindex_type, CONFIG, ANNOT_EXTRA_TEST_ROUND, BASE_STAT_PATH
 from src.db.db import init_db, main_db_path
 from src.db.models import DBPostIndexPost
+from src.iter_funcs.create_annot_dbs import AnnotPostCollection
 from src.mutli_func_iter import IterationMethod, IterationSettings, complex_main_generic_all_data
 from src.post_filter import check_original_tweet
 from src.util import post_date, post_url, year_month_str
@@ -95,14 +96,8 @@ class IndexEntriesDB(IterationMethod):
         for lang in settings.languages:
             self.index_entries[lang] = []
             self._language_sessionmakers: dict[str, sessionmaker] = {
-                lang: init_db(main_db_path(settings.year, settings.month, language=lang))
-
+                lang: init_db(main_db_path(settings.year, settings.month, lang, settings.annotation_extra))
             }
-
-        # self.post_collection = AnnotPostCollection(settings.languages,
-        #                                       settings.year,
-        #                                       settings.month,
-        #                                       settings.annotation_extra)
 
     @staticmethod
     def _create_index_entry(post_data: dict, location_index: locationindex_type) -> DBPostIndexPost:
@@ -131,7 +126,7 @@ class IndexEntriesDB(IterationMethod):
                     session.commit()
                     self.index_entries[lang].clear()
 
-    # self.post_collection.add_post(post_data, location_index)
+    #
 
     def finalize(self):
         for lang in self._language_sessionmakers:
@@ -139,28 +134,30 @@ class IndexEntriesDB(IterationMethod):
                 session.add_all(self.index_entries[lang])
                 session.commit()
                 self.index_entries[lang].clear()
-        # self.post_collection.validate()
-        # self.post_collection.finalize_dbs()
 
 
 class AnnotationDBMethod(IterationMethod):
+
+    def __init__(self, settings: IterationSettings):
+        super().__init__(settings)
+
+        self.post_collection = AnnotPostCollection(settings.languages,
+                                                   settings.year,
+                                                   settings.month,
+                                                   settings.annotation_extra)
 
     @property
     def name(self) -> str:
         return "annotation"
 
     def _process_data(self, post_data: dict, location_index: locationindex_type) -> Any:
-        pass
-
-    def process_data(self, post_data: dict, location_index: locationindex_type):
-        pass
+        lang_or_none = self._methods["filter"].current_result
+        if lang_or_none:
+            self.post_collection.add_post(post_data, location_index)
 
     def finalize(self):
-        pass
-
-
-# self.post_collection.validate()
-# self.post_collection.finalize_dbs()
+        self.post_collection.validate()
+        self.post_collection.finalize_dbs()
 
 
 # def main(year: int, month: int, languages: set[str], annotation_extra: str):
@@ -181,7 +178,10 @@ class AnnotationDBMethod(IterationMethod):
 
 def main(year: int, month: int, languages: set[str], annotation_extra: str):
     settings = IterationSettings(year, month, languages, annotation_extra)
-    complex_main_generic_all_data(settings, [PostFilterMethod, StatsCollectionMethod, IndexEntriesDB])
+    complex_main_generic_all_data(settings, [PostFilterMethod,
+                                             StatsCollectionMethod,
+                                             IndexEntriesDB,
+                                             AnnotationDBMethod])
 
 
 if __name__ == "__main__":

@@ -46,6 +46,11 @@ class DBPostIndexPost(Base):
         self.hour_created = self.date_created.hour
 
 
+class DBPost(Base):
+    __tablename__ = 'post'
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+
 # class DBPost(Base):
 #     __tablename__ = 'post'
 #

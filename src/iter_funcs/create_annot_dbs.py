@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from deprecated_modules.create_anon_entries import create_annot1
 from src.consts import CONFIG, logger, ANNOT_EXTRA_TEST_ROUND_EXPERIMENT
-from src.db.db import annotation_db_path, strict_init_annot_db_get_session
+from src.db.db import annotation_db_path, strict_init_annot_db_get_session, init_db, main_db_path
 from src.post_filter import check_original_tweet
 from src.simple_generic_iter import main_generic_all_data
 from src.util import post_date
@@ -34,11 +34,10 @@ class AnnotPostCollection:
                                         for i in range(0, 24)
                                         }
             # DBS
-            self._language_sessions[lang] = strict_init_annot_db_get_session(
-                annotation_db_path(year,
-                                   month,
-                                   lang,
-                                   annot_extr))
+            self._language_sessions[lang] = init_db(main_db_path(year,
+                                                                 month,
+                                                                 lang,
+                                                                 annot_extr))()
 
     def add_post(self, post_data: dict, location_index: tuple[str, str, str, int]):
         post_date_ = post_date(post_data['timestamp_ms'])
@@ -58,7 +57,7 @@ class AnnotPostCollection:
             for day, hours in days.items():
                 for hour, col_entry in hours.items():
                     if not col_entry:
-                        print(f"Missing post for: {lang}-{day}-{hour}")
+                        print(f"Missing post for: {lang}-day:{day}-hour:{hour}")
 
     def finalize_dbs(self):
         for lang, days in self._col.items():
