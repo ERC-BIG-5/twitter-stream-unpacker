@@ -1,18 +1,16 @@
 import json
-from abc import ABC
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional, Any
 
 from sqlalchemy.orm import sessionmaker
 
-from src.consts import locationindex_type, CONFIG, ANNOT_EXTRA_TEST_ROUND
+from src.consts import locationindex_type, CONFIG, ANNOT_EXTRA_TEST_ROUND, BASE_STAT_PATH
 from src.db.db import init_db, main_db_path
 from src.db.models import DBPostIndexPost
 from src.mutli_func_iter import IterationMethod, IterationSettings, complex_main_generic_all_data
 from src.post_filter import check_original_tweet
-from src.util import post_date, post_url
-
+from src.util import post_date, post_url, year_month_str
 
 
 class PostFilterMethod(IterationMethod):
@@ -76,7 +74,11 @@ class StatsCollectionMethod(IterationMethod):
             self.stats.total_posts += tar_file_stats.total_posts
             self.stats.accepted_posts += tar_file_stats.accepted_posts
 
-        print(json.dumps(self.stats.to_dict(), indent=2))
+        # todo this should be derived from the global status file, or pass it there
+        stats_file_path = BASE_STAT_PATH / f"{year_month_str(self.settings.year, self.settings.month)}.json"
+
+        json.dump(self.stats.to_dict(), stats_file_path.open("w", encoding="utf-8"),
+                  indent=2)
 
 
 class IndexEntriesDB(IterationMethod):
@@ -84,7 +86,6 @@ class IndexEntriesDB(IterationMethod):
     @property
     def name(self) -> str:
         return "index"
-
 
     def __init__(self, settings: IterationSettings):
         super().__init__(settings)
@@ -124,7 +125,7 @@ class IndexEntriesDB(IterationMethod):
             lang = entry.language
             self.index_entries[lang].append(entry)
 
-            if len(self.index_entries[lang])  > self.DUMP_THRESH:
+            if len(self.index_entries[lang]) > self.DUMP_THRESH:
                 with self._language_sessionmakers[lang]() as session:
                     session.add_all(self.index_entries[lang])
                     session.commit()
@@ -133,14 +134,13 @@ class IndexEntriesDB(IterationMethod):
     # self.post_collection.add_post(post_data, location_index)
 
     def finalize(self):
-        for lang, sessionmaker in self._language_sessionmakers:
+        for lang in self._language_sessionmakers:
             with self._language_sessionmakers[lang]() as session:
                 session.add_all(self.index_entries[lang])
                 session.commit()
                 self.index_entries[lang].clear()
         # self.post_collection.validate()
         # self.post_collection.finalize_dbs()
-
 
 
 class AnnotationDBMethod(IterationMethod):
@@ -157,8 +157,6 @@ class AnnotationDBMethod(IterationMethod):
 
     def finalize(self):
         pass
-
-
 
 
 # self.post_collection.validate()
