@@ -12,7 +12,7 @@ from typing import TypeVar, Literal, cast
 
 from sqlalchemy.orm import DeclarativeBase
 
-from consts import CONFIG
+from src.consts import CONFIG
 
 # not sure if this is needed
 T = TypeVar('T', bound=DeclarativeBase)
