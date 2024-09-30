@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
 BASE_DATA_PATH = PROJECT_PATH / "data"
-BASE_DBS_PATH = BASE_DATA_PATH / "data"
+BASE_DBS_PATH = BASE_DATA_PATH / "sqlite_dbs"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
 MAIN_STATUS_FILE_PATH = BASE_DATA_PATH / "status.json"
 
@@ -46,7 +46,7 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
 
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
-    LANGUAGES: list[str] = ["en", "es", "pt", "it", "de", "fr", "zxx"]
+    LANGUAGES: list[str] = ["en"] #["en", "es", "pt", "it", "de", "fr", "zxx"]
     # todo, remove that...
     ONLY_ORIG_TWEETS: bool = field(default=True, metadata={
         "description": "Filters out comments, retweets, quoted retweets..."})  # for main

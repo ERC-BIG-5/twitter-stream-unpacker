@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 
 from src.consts import CONFIG, logger, BASE_STAT_PATH
 from src.db.db import init_db, main_db_path
-from src.db.models import TimeRangeEvalEntry
+from src.db.models import DBPostIndexPost
 from src.post_filter import check_original_tweet
 from src.util import consider_deletion, get_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data, post_url, \
     post_date
@@ -36,9 +36,9 @@ def iter_dumps() -> list[Path]:
     return CONFIG.STREAM_BASE_FOLDER.glob("archiveteam-twitter-stream-*")
 
 
-def create_time_range_entry(data: dict, location_index: list[str]) -> TimeRangeEvalEntry:
+def create_time_range_entry(data: dict, location_index: list[str]) -> DBPostIndexPost:
     post_dt = post_date(data['timestamp_ms'])
-    post = TimeRangeEvalEntry(
+    post = DBPostIndexPost(
         platform="twitter",
         post_url_computed=post_url(data),
         date_created=post_dt,
@@ -50,7 +50,7 @@ def create_time_range_entry(data: dict, location_index: list[str]) -> TimeRangeE
 
 
 def process_jsonl_entry(jsonl_entry: dict,
-                        location_index: list[str]) -> Optional[TimeRangeEvalEntry]:
+                        location_index: list[str]) -> Optional[DBPostIndexPost]:
     if "data" in jsonl_entry:
         data = jsonl_entry["data"]
     else:  # 2022-01,02
@@ -65,16 +65,16 @@ def process_jsonl_entry(jsonl_entry: dict,
 
 def process_jsonl_file(jsonl_file_data: bytes,
                        location_index: list[str]) -> tuple[
-    CollectionStatus, list[TimeRangeEvalEntry]]:
+    CollectionStatus, list[DBPostIndexPost]]:
     entries_count = 0
     accepted: dict[str, int] = {}
 
-    posts: list[TimeRangeEvalEntry] = []
+    posts: list[DBPostIndexPost] = []
 
     for jsonl_entry in jsonlines.Reader(io.BytesIO(jsonl_file_data)):
         location_index.append(entries_count)
         entries_count += 1
-        post: Optional[TimeRangeEvalEntry] = process_jsonl_entry(jsonl_entry, location_index.copy())
+        post: Optional[DBPostIndexPost] = process_jsonl_entry(jsonl_entry, location_index.copy())
         # language and original tweet filter
         if post:
             posts.append(post)
@@ -88,7 +88,7 @@ def process_tar_file(tar_file: Path,
                      session: Session,
                      location_index: list[str]) -> CollectionStatus:
     tar_file_status = CollectionStatus(items={})
-    posts: list[TimeRangeEvalEntry] = []
+    posts: list[DBPostIndexPost] = []
     for jsonl_file_name, jsonl_file_data in tqdm(iter_jsonl_files_data(tar_file)):
         location_index.append(jsonl_file_name)
         # process jsonl file

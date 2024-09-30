@@ -8,7 +8,7 @@ from typing import Generator
 
 from jsonlines import jsonlines
 
-from consts import logger, CONFIG
+from src.consts import logger, CONFIG
 
 
 def get_dump_path(year: int, month: int)-> Path:
