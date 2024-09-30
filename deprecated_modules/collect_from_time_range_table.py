@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from src.consts import logger
 from src.db.db import init_db, main_db_path, annotation_db_path
-from src.db.models import TimeRangeEvalEntry
+from src.db.models import DBPostIndexPost
 from src.pick_data import grab_posts_from_location
 
 
@@ -23,7 +23,7 @@ def get_first_tweets_by_hour(year: int, month: int, for_languages: set[str], pic
         # Create the date object for the start of the day
         start_date = datetime(year, month, day)
 
-        posts_to_collect: list[tuple[TimeRangeEvalEntry], int] = []
+        posts_to_collect: list[tuple[DBPostIndexPost], int] = []
 
         # Iterate through each hour of the day
         for hour in tqdm(range(24)):
@@ -36,11 +36,11 @@ def get_first_tweets_by_hour(year: int, month: int, for_languages: set[str], pic
                 # print(list(main_session.execute(select(DBPost).limit(10))))
                 # Query for the earliest tweet in this hour
                 query = (
-                    select(TimeRangeEvalEntry)
-                    .where(TimeRangeEvalEntry.date_created >= hour_start)
-                    .where(TimeRangeEvalEntry.date_created < hour_end)
-                    .where(TimeRangeEvalEntry.language == lang)
-                    .order_by(TimeRangeEvalEntry.date_created)
+                    select(DBPostIndexPost)
+                    .where(DBPostIndexPost.date_created >= hour_start)
+                    .where(DBPostIndexPost.date_created < hour_end)
+                    .where(DBPostIndexPost.language == lang)
+                    .order_by(DBPostIndexPost.date_created)
                     .limit(pick_k)
                 )
 
