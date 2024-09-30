@@ -1,5 +1,4 @@
 from src.consts import CONFIG, logger
-from src.util import post_url
 
 
 def check_original_tweet(data: dict) -> bool:
