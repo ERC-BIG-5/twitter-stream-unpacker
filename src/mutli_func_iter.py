@@ -7,38 +7,33 @@ from typing import cast, Type, Any, Optional
 import jsonlines
 from tqdm import tqdm
 
-from src.consts import logger, locationindex_type, CONFIG
+from src.consts import logger, locationindex_type, CONFIG, METHOD_STATS, METHOD_INDEX_DB, METHOD_ANNOTATION_DB
+from src.models import IterationSettings, ProcessCancel
+from src.status import MainStatus, MonthDatasetStatus
 from src.util import get_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data
 
-
-@dataclass
-class IterationSettings:
-    year: int
-    month: int
-    languages: set[str]
-    annotation_extra: str = ""
 
 
 class IterationMethod(ABC):
 
     def __init__(self, settings: IterationSettings):
         self.settings = settings
+        self.main_status: Optional[MainStatus] = None
         self._methods = dict[str, "IterationMethod"]
         self.current_result: Optional[Any] = None
 
     def set_methods(self, methods: dict[str, "IterationMethod"]):
         self._methods = methods
 
-
-    def process_data(self, post_data: dict, location_index: locationindex_type) -> None:
+    def process_data(self, post_data: dict, location_index: locationindex_type) -> Optional[ProcessCancel]:
         self.current_result = self._process_data(post_data, location_index)
-
+        if isinstance(self.current_result, ProcessCancel):
+            return self.current_result
 
     @property
     @abstractmethod
     def name(self) -> str:
         pass
-
 
     @abstractmethod
     def _process_data(self, post_data: dict, location_index: locationindex_type) -> Any:
@@ -58,7 +53,10 @@ def _generic_process_jsonl_entry(jsonl_entry: dict,
         data = jsonl_entry
 
     for method in methods:
-        method.process_data(data, tuple(location_index))
+        res = method.process_data(data, tuple(location_index))
+        if isinstance(res, ProcessCancel):
+            logger.debug(res.reason)
+            break
     return None
 
 
@@ -86,7 +84,7 @@ def _generic_process_tar_file(tar_file: Path,
         location_index.pop()
         TEST_COUNT += 1
 
-        if CONFIG.TESTMODE and TEST_COUNT == 50:
+        if CONFIG.TEST_MODE and TEST_COUNT == 50:
             break
 
 
@@ -103,20 +101,20 @@ def _generic_process_dump(dump_path: Path, methods: list[IterationMethod]):
         # process tar file
         _generic_process_tar_file(tar_file, location_index, methods)
         location_index.pop()
-        if CONFIG.TESTMODE:
+        if CONFIG.TEST_MODE:
             break
 
 
 def complex_main_generic_all_data(settings: IterationSettings,
+                                  status: Optional[MonthDatasetStatus],
                                   methods: list[Type[IterationMethod]]):
-    if CONFIG.TESTMODE:
+    if CONFIG.TEST_MODE:
         logger.info("Test-mode on")
     dump_path = get_dump_path(settings.year, settings.month)
     if not dump_path.exists():
         logger.error(f"dumppath {dump_path} does not exist")
         return
     # call process func
-
     _methods = [method(settings) for method in methods]
     _method_dict = {method.name: method for method in _methods}
     for method in _methods:
@@ -126,5 +124,14 @@ def complex_main_generic_all_data(settings: IterationSettings,
 
     for method in _methods:
         method.finalize()
+
+    if status:
+        for method in methods:
+            if method.name == METHOD_STATS:
+                status.stats_file_available = True
+            elif method.name == METHOD_INDEX_DB:
+                status.index_db_available = True
+            elif method.name == METHOD_ANNOTATION_DB:
+                status.index_db_available = True
 
 
