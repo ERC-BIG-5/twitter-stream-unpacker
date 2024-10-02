@@ -23,10 +23,10 @@ class MonthDatasetStatus(BaseModel):
     key: YearMonth
     folder_name: str
     valid: Optional[bool] = False
-    #databases: list[SqlDatabases] = Field(default_factory=list)
     annotated_db_available: bool = False
     index_db_available: bool = False
     stats_file_available: bool = False
+    label_studio_project_created: bool = False
 
     @property
     def stats_file_path(self) -> Path:
@@ -62,11 +62,10 @@ class MainStatus(BaseModel):
                     sf = MonthDatasetStatus(key=ym, folder_name=folder.name)
                     self.year_months[str(ym)] = sf
 
-    def print_database_statuses(self):
-        for ym, ds in self.year_months.items():
-            stats_fp = ds.stats_file_path
-            if not stats_fp.exists():
-                logger.warning(f"{ym}: stats file missing")
+    def print_database_status(self, month_status: MonthDatasetStatus):
+        stats_fp = month_status.stats_file_path
+        if not stats_fp.exists():
+            logger.warning(f"{month_status.key}: stats file missing")
 
 
 Main_Status: MainStatus = None

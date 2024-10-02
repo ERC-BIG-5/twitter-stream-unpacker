@@ -43,6 +43,9 @@ class IterationMethod(ABC):
     def finalize(self):
         pass
 
+    @abstractmethod
+    def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
+        pass
 
 def _generic_process_jsonl_entry(jsonl_entry: dict,
                                  location_index: locationindex_type,
@@ -123,15 +126,10 @@ def complex_main_generic_all_data(settings: IterationSettings,
     _generic_process_dump(dump_path, _methods)
 
     for method in _methods:
+        if status:
+            method.set_ds_status_field(status)
         method.finalize()
 
-    if status:
-        for method in methods:
-            if method.name == METHOD_STATS:
-                status.stats_file_available = True
-            elif method.name == METHOD_INDEX_DB:
-                status.index_db_available = True
-            elif method.name == METHOD_ANNOTATION_DB:
-                status.index_db_available = True
+
 
 
