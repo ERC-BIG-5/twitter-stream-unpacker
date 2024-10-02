@@ -32,6 +32,12 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
     with tarfile.open(tar_file, 'r') as tar:
         relevant_members = [member for member in tar.getmembers() if
                             (member.name.endswith('.json.bz2') or member.name.endswith('.json.gz'))]
+        # sort them (their name includes the datetime)
+        def sort_key(tar_info):
+            return Path(tar_info.name).stem.split('.')[0]
+
+        relevant_members = sorted(relevant_members, key=sort_key)
+
         for member in relevant_members:
             extracted_file = tar.extractfile(member)
             if member.name.endswith("bz2"):

@@ -79,6 +79,5 @@ def check_annot_db_exists(year: int, month: int, language: str = "",
 
 if __name__ == "__main__":
     init_db(annotation_db_path(2022, 1, "en", annotation_extra="1"),
-            reset=True,
             tables={DBAnnot1Post}
             )

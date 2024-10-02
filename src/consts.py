@@ -4,7 +4,7 @@ from logging import getLogger, StreamHandler, Formatter, FileHandler
 from pathlib import Path
 from typing import Literal, Optional
 
-from pydantic import SecretStr
+from pydantic import SecretStr, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
@@ -59,6 +59,9 @@ class Config(BaseSettings):
     # LABLESTUDIO
     LS_BASE_URL: Optional[str] = "http://localhost:8080/"
     LABELSTUDIO_ACCESS_TOKEN: Optional[str] = None
+    # TEST MODE
+    TEST_NUM_TAR_FILES:int = Field(1, ge=1)
+    TEST_NUM_JSONL_FILES:int = Field(20,  ge=1)
 
 
 CONFIG = Config()

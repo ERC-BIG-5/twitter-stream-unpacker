@@ -79,15 +79,15 @@ def _generic_process_jsonl_file(jsonl_file_data: bytes,
 def _generic_process_tar_file(tar_file: Path,
                               location_index: list[str],
                               methods: list[IterationMethod]):
-    TEST_COUNT = 0
+    test_count = 0
     for jsonl_file_name, jsonl_file_data in tqdm(iter_jsonl_files_data(tar_file)):
         location_index.append(jsonl_file_name)
         # process jsonl file
         _generic_process_jsonl_file(jsonl_file_data, location_index, methods)
         location_index.pop()
-        TEST_COUNT += 1
+        test_count += 1
 
-        if CONFIG.TEST_MODE and TEST_COUNT == 50:
+        if CONFIG.TEST_MODE and test_count == CONFIG.TEST_NUM_JSONL_FILES:
             break
 
 
@@ -104,7 +104,7 @@ def _generic_process_dump(dump_path: Path, methods: list[IterationMethod]):
         # process tar file
         _generic_process_tar_file(tar_file, location_index, methods)
         location_index.pop()
-        if CONFIG.TEST_MODE:
+        if CONFIG.TEST_MODE and idx == CONFIG.TEST_NUM_TAR_FILES:
             break
 
 
