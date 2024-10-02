@@ -6,9 +6,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from src.consts import MAIN_STATUS_FILE_PATH, CONFIG, BASE_STAT_PATH
+from src.consts import MAIN_STATUS_FILE_PATH, CONFIG, BASE_STAT_PATH, logger
 from src.util import year_month_str
-
 
 @dataclass(frozen=True)
 class YearMonth:
@@ -19,16 +18,15 @@ class YearMonth:
         return f"{self.year:04d}-{self.month:02d}"
 
 
-class SqlDatabases(BaseModel):
-    annotated_db_available: bool = False
-    index_db_available: bool = False
 
-
-class MonthDataset(BaseModel):
+class MonthDatasetStatus(BaseModel):
     key: YearMonth
     folder_name: str
     valid: Optional[bool] = False
-    databases: list[SqlDatabases] = Field(default_factory=list)
+    #databases: list[SqlDatabases] = Field(default_factory=list)
+    annotated_db_available: bool = False
+    index_db_available: bool = False
+    stats_file_available: bool = False
 
     @property
     def stats_file_path(self) -> Path:
@@ -37,7 +35,7 @@ class MonthDataset(BaseModel):
 
 
 class MainStatus(BaseModel):
-    year_months: dict[str, MonthDataset] = Field(default_factory=dict)
+    year_months: dict[str, MonthDatasetStatus] = Field(default_factory=dict)
     changed: bool = Field(False, exclude=True)
 
     @staticmethod
@@ -61,14 +59,14 @@ class MainStatus(BaseModel):
                 if ym in self.year_months:
                     continue
                 else:
-                    sf = MonthDataset(key=ym, folder_name=folder.name)
+                    sf = MonthDatasetStatus(key=ym, folder_name=folder.name)
                     self.year_months[str(ym)] = sf
 
     def print_database_statuses(self):
         for ym, ds in self.year_months.items():
             stats_fp = ds.stats_file_path
             if not stats_fp.exists():
-                print(f"{ym}: stats file missing")
+                logger.warning(f"{ym}: stats file missing")
 
 
 Main_Status: MainStatus = None

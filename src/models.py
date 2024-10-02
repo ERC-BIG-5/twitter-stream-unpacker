@@ -5,12 +5,19 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from deprecated_modules.create_anon_entries import create_annot1
-from src.consts import CONFIG, logger, ANNOT_EXTRA_TEST_ROUND_EXPERIMENT
-from src.db.db import annotation_db_path, strict_init_annot_db_get_session, init_db, main_db_path
-from src.post_filter import check_original_tweet
-from src.simple_generic_iter import main_generic_all_data
-from src.util import post_date
+from src.consts import logger
+from src.db.db import init_db, main_db_path
+from src.db.models import DBAnnot1Post
+from src.post_filter import check_contains_media
+from src.util import post_date, post_url
+
+
+@dataclass
+class IterationSettings:
+    year: int
+    month: int
+    languages: set[str]
+    annotation_extra: str = ""
 
 
 @dataclass
@@ -18,6 +25,12 @@ class AnnotCollectionEntry:
     dt: datetime
     post_data: dict
     location_index: tuple[str, str, str, int]
+
+
+class ProcessCancel:
+
+    def __init__(self, reason: Optional[str] = ""):
+        self.reason = reason
 
 
 class AnnotPostCollection:
@@ -28,8 +41,8 @@ class AnnotPostCollection:
 
         for lang in languages:
             self._col[lang] = {}
-            num_days = calendar.monthrange(year, month)[1]
-            for day in range(1, num_days + 1):
+            num_days = calendar.monthrange(year, month)[1] + 1
+            for day in range(1, num_days):
                 self._col[lang][day] = {i: None
                                         for i in range(0, 24)
                                         }
@@ -59,41 +72,28 @@ class AnnotPostCollection:
                     if not col_entry:
                         print(f"Missing post for: {lang}-day:{day}-hour:{hour}")
 
+    def create_annot1(self, post: dict,
+                      location_index: Optional[tuple[str, str, str, int]] = None) -> DBAnnot1Post:
+        db_post = DBAnnot1Post(
+            post_url=post_url(post),
+            location_index=[],  # todo, pass with the rest
+            platform_id=post['id_str'],
+            date_created=post_date(post['timestamp_ms']),
+            language=post['lang'],
+            text=post['text'],
+            contains_media=check_contains_media(post)
+        )
+        db_post.set_date_columns()
+        db_post.location_index = location_index
+        return db_post
+
     def finalize_dbs(self):
         for lang, days in self._col.items():
             session = self._language_sessions[lang]
             for day, hours in days.items():
                 for hour, col_entry in hours.items():
                     if col_entry:
-                        session.add(create_annot1(col_entry.post_data, col_entry.location_index))
+                        session.add(self.create_annot1(col_entry.post_data, col_entry.location_index))
 
             session.commit()
             session.close()
-
-
-def create_anont_dbs(year: int, month: int, languages: set[str], annot_extr: str):
-    if CONFIG.TESTMODE:
-        logger.info("Running TEST-MODE, aborting after one tar file")
-    post_collection = AnnotPostCollection(languages, year, month, annot_extr)
-
-    def insert_post(post_data: dict, location_index: tuple[str, str, str, int]):
-        if not check_original_tweet(post_data):
-            return
-        # post = create_annot1(data)
-        if post_data["lang"] not in languages:
-            return
-        post_collection.add_post(post_data, location_index)
-
-    main_generic_all_data(insert_post)
-    post_collection.validate()
-    post_collection.finalize_dbs()
-
-    """
-
-    import subprocess
-    subprocess.run(["shutdown", "-h", "now"])
-    """
-
-
-if __name__ == "__main__":
-    create_anont_dbs(2022, 1, {"en", "es"}, ANNOT_EXTRA_TEST_ROUND_EXPERIMENT)
