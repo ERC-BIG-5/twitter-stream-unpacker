@@ -6,7 +6,7 @@ import genson
 
 from src.consts import METHOD_SCHEMA, locationindex_type, METHOD_FILTER
 from src.models import IterationSettings
-from src.mutli_func_iter import IterationMethod
+from src.process_methods.abstract_method import IterationMethod
 
 
 class EntrySchema(IterationMethod):

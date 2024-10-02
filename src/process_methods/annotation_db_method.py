@@ -2,7 +2,7 @@ from typing import Any
 
 from src.consts import METHOD_ANNOTATION_DB, locationindex_type, METHOD_FILTER
 from src.models import IterationSettings, AnnotPostCollection
-from src.mutli_func_iter import IterationMethod
+from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 
 

@@ -5,7 +5,7 @@ from typing import Optional, Any
 
 from src.consts import METHOD_STATS, locationindex_type, METHOD_FILTER, BASE_STAT_PATH
 from src.models import IterationSettings
-from src.mutli_func_iter import IterationMethod
+from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 from src.util import year_month_str
 
@@ -38,8 +38,6 @@ class StatsCollectionMethod(IterationMethod):
 
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         status.stats_file_available = True
-
-
 
     @property
     def name(self) -> str:

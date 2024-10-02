@@ -4,7 +4,7 @@ from src.consts import METHOD_INDEX_DB, locationindex_type
 from src.db.db import init_db, main_db_path
 from src.db.models import DBPostIndexPost
 from src.models import IterationSettings
-from src.mutli_func_iter import IterationMethod
+from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 from src.util import post_date, post_url
 

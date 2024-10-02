@@ -1,51 +1,16 @@
 import io
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from pathlib import Path
 from typing import cast, Type, Any, Optional
 
 import jsonlines
 from tqdm import tqdm
 
-from src.consts import logger, locationindex_type, CONFIG, METHOD_STATS, METHOD_INDEX_DB, METHOD_ANNOTATION_DB
+from src.consts import logger, locationindex_type, CONFIG
 from src.models import IterationSettings, ProcessCancel
+from src.process_methods.abstract_method import IterationMethod
 from src.status import MainStatus, MonthDatasetStatus
 from src.util import get_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data
-
-
-
-class IterationMethod(ABC):
-
-    def __init__(self, settings: IterationSettings):
-        self.settings = settings
-        self.main_status: Optional[MainStatus] = None
-        self._methods = dict[str, "IterationMethod"]
-        self.current_result: Optional[Any] = None
-
-    def set_methods(self, methods: dict[str, "IterationMethod"]):
-        self._methods = methods
-
-    def process_data(self, post_data: dict, location_index: locationindex_type) -> Optional[ProcessCancel]:
-        self.current_result = self._process_data(post_data, location_index)
-        if isinstance(self.current_result, ProcessCancel):
-            return self.current_result
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        pass
-
-    @abstractmethod
-    def _process_data(self, post_data: dict, location_index: locationindex_type) -> Any:
-        pass
-
-    @abstractmethod
-    def finalize(self):
-        pass
-
-    @abstractmethod
-    def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
-        pass
 
 def _generic_process_jsonl_entry(jsonl_entry: dict,
                                  location_index: locationindex_type,

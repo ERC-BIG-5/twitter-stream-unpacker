@@ -2,8 +2,8 @@ from typing import Any
 
 from src.consts import METHOD_FILTER, locationindex_type, CONFIG
 from src.models import ProcessCancel
-from src.mutli_func_iter import IterationMethod
 from src.post_filter import is_original_tweet
+from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 
 
