@@ -2,6 +2,7 @@ from datetime import date
 from pathlib import Path
 from typing import Optional, Type
 
+from deprecated.classic import deprecated
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.orm import sessionmaker
@@ -28,13 +29,14 @@ def main_db_path(year: int, month: int, language: str = "", annotation_extra: st
     return BASE_DBS_PATH / _db_path(annotation_extra, year, month, language, platform)
 
 
+@deprecated(reason="we should only use one db for each month")
 def annotation_db_path(year: int, month: int, language: str = "",
                        annotation_extra: str = "",
                        platform: str = "twitter") -> Path:
     return BASE_DBS_PATH / _db_path(f"{ANNOTATION_DB}_{annotation_extra}", year, month, language, platform)
 
 
-def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
+def init_db(db_path: Path, read_only: bool = False,
             new: bool = False, tables: Optional[set[Type[DeclarativeBase]]] = None) -> sessionmaker:
     """
 
@@ -45,12 +47,6 @@ def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
     # ask for removal of db file, if config is True
     if new and db_path.exists():
         raise Exception(f"DB already exists: {db_path}")
-    if (CONFIG.RESET_DB or reset) and db_path.exists():
-        delete_resp = input(f"Do you want to delete the db"
-                            f"{db_path}? : y/ other key\n")
-        if delete_resp == "y":
-            logger.info(f"deleting: {db_path}")
-            db_path.unlink()
 
     db_uri = db_path.as_posix()
     if read_only:
@@ -59,10 +55,10 @@ def init_db(db_path: Path, reset: bool = False, read_only: bool = False,
         if not Path(db_uri).exists():
             raise FileNotFoundError(f"DB file does not exist: {db_uri}")
 
-    logger.info(f"init db: {db_uri}")
     engine = create_engine(f'sqlite:///{db_uri}')
     if not db_path.exists():
         create_database(engine.url)
+        logger.info(f"creating db: {db_path.relative_to(BASE_DBS_PATH)}")
         if tables:
             Base.metadata.create_all(engine, tables=[cls.__table__ for cls in tables])
         else:

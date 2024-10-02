@@ -16,7 +16,8 @@ def get_dump_path(year: int, month: int) -> Path:
 
 
 def iter_tar_files(path: Path) -> Generator[Path, None, None]:
-    return path.glob("twitter-stream-*.tar")
+    for p in sorted(path.glob("twitter-stream-*.tar")):
+        yield p
 
 
 def list_jsonl_file(path: Path) -> Generator[Path, None, None]:
