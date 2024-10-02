@@ -19,9 +19,9 @@ def _get_month_short_name(month_number: int) -> str:
 
 def _db_path(db_type: str, year: int, month: int, language: str = "XXX", platform: str = "twitter") -> str:
     # jan,feb,mar, ...
-    month_short_name = _get_month_short_name(month).lower()
+    #month_short_name = _get_month_short_name(month).lower()
     lang = language.ljust(3, "_")
-    return f'{db_type}_{year}_{month_short_name}_{lang}_{platform}.sqlite'
+    return f'{db_type}_{year}_{str(month).rjust(2,"0")}_{lang}_{platform}.sqlite'
 
 
 def main_db_path(year: int, month: int, language: str = "", annotation_extra: str = "",

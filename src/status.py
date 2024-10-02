@@ -26,7 +26,7 @@ class MonthDatasetStatus(BaseModel):
     annotated_db_available: bool = False
     index_db_available: bool = False
     stats_file_available: bool = False
-    label_studio_project_created: bool = False
+    label_studio_project_ids: Optional[dict[str,int]] = Field(default_factory=dict)
 
     @property
     def stats_file_path(self) -> Path:

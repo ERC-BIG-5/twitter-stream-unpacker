@@ -25,6 +25,7 @@ GENERATED_PROJECTS_INFO_PATH = BASE_LABELSTUDIO_DATA_PATH / "info.json"
 ANNOT_EXTRA_TEST_ROUND = "1"
 ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
 
+
 for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_STAT_PATH, LABELSTUDIO_TASK_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_TASK_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH]:
     p.mkdir(parents=True, exist_ok=True)
@@ -59,9 +60,11 @@ class Config(BaseSettings):
     # LABLESTUDIO
     LS_BASE_URL: Optional[str] = "http://localhost:8080/"
     LABELSTUDIO_ACCESS_TOKEN: Optional[str] = None
+    # TODO this for later will be related to annotation_extra (maybe name it experiment)
+    LABELSTUDIO_LABEL_CONFIG_FILENAME: str = "annotation_test.xml"
     # TEST MODE
-    TEST_NUM_TAR_FILES:int = Field(1, ge=1)
-    TEST_NUM_JSONL_FILES:int = Field(20,  ge=1)
+    TEST_NUM_TAR_FILES: int = Field(1, ge=1)
+    TEST_NUM_JSONL_FILES: int = Field(20, ge=1)
 
 
 CONFIG = Config()

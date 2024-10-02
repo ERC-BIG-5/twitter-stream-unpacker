@@ -1,15 +1,20 @@
+import datetime
 import json
 import shutil
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Optional
 
+from label_studio_sdk._extensions.pager_ext import SyncPagerExt
+from label_studio_sdk.client import LabelStudio
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.consts import LABELSTUDIO_TASK_PATH, logger
+from src.consts import LABELSTUDIO_TASK_PATH, logger, LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH
 from src.db.db import annotation_db_path, init_db
 from src.db.models import DBAnnot1Post
+from src.models import IterationSettings
+from src.status import MonthDatasetStatus
 
 
 @dataclass
@@ -17,7 +22,6 @@ class LabelstudioTask:
     post_text: str
     post_url: Optional[str]
     has_media: bool = field(default=False)
-
 
 def dump_labelstudio_tasks(ls_tasks: list[LabelstudioTask], path: Path,
                            single_file: bool = False,
@@ -41,7 +45,8 @@ def dump_labelstudio_tasks(ls_tasks: list[LabelstudioTask], path: Path,
             (path / f"{str(idx)}.json").write_text(json.dumps(asdict(task), ensure_ascii=False), encoding="utf-8")
 
 
-def get_labelstudio_task_path(year: int, month: int, language: str, annotation_extra: str = "", single_file:bool = False) -> Path:
+def get_labelstudio_task_path(year: int, month: int, language: str, annotation_extra: str = "",
+                              single_file: bool = False) -> Path:
     f_stem = annotation_db_path(year, month, language, annotation_extra=annotation_extra).stem
     if single_file:
         return LABELSTUDIO_TASK_PATH / f_stem
@@ -59,5 +64,10 @@ def create_annotation_label_ds(year: int, month: int, language: str, annotation_
     dump_labelstudio_tasks(label_entries, fp, single_file)
 
 
-if __name__ == '__main__':
-    create_annotation_label_ds(2022, 1, "en", "1")
+def create_annotation_label_datasets(settings: IterationSettings, status: MonthDatasetStatus):
+    for language in settings.languages:
+        create_annotation_label_ds(year=settings.year,
+                                   month=settings.month,
+                                   language=language,
+                                   annotation_extra=settings.annotation_extra)
+

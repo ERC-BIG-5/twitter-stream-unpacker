@@ -1,12 +1,13 @@
 from typing import Optional
 
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH
+from src.labelstudio.labelstudio_client import LabelStudioManager
 from src.mutli_func_iter import IterationSettings, complex_main_generic_all_data
 from src.process_methods.annotation_db_method import AnnotationDBMethod
 from src.process_methods.index_db_method import IndexEntriesDB
 from src.process_methods.post_filter_method import PostFilterMethod
 from src.process_methods.stats_method import StatsCollectionMethod
-from src.status import MainStatus, Main_Status, MonthDatasetStatus
+from src.status import MainStatus, MonthDatasetStatus
 from src.util import year_month_str
 
 
@@ -43,7 +44,17 @@ def main() -> None:
         return
     settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES)
     month_status = main_status.year_months[ym_s]
+
+    # main process going through the dump folder
     iter_dumps_main(settings, month_status)
+    # checking label-studio project
+    if not month_status.label_studio_project_ids:
+        ls_client = LabelStudioManager()
+        month_status.label_studio_project_ids = (
+            ls_client.create_projects_for_db("twitter",
+                                             settings,
+                                             CONFIG.LABELSTUDIO_LABEL_CONFIG_FILENAME))
+
     main_status.print_database_status(month_status)
     if main_status:
         main_status.store_status()
