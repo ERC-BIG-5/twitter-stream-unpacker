@@ -26,7 +26,6 @@ ANNOT_EXTRA_TEST_ROUND = "1"
 ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
 ANOOT_EXTRA_TEST_HAS_MEDIA = "1m"
 
-
 for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH]:
     p.mkdir(parents=True, exist_ok=True)
@@ -62,7 +61,8 @@ class Config(BaseSettings):
     LS_BASE_URL: Optional[str] = "http://localhost:8080/"
     LABELSTUDIO_ACCESS_TOKEN: Optional[str] = None
     LABELSTUDIO_TASK_PATH: str
-    LABELSTUDIO_CONFIG_TASK_BASE_PATH: str # this is to specify the dataset path for LS (specially when its running in docker)
+    LABELSTUDIO_CONFIG_TASK_BASE_PATH: str  # this is to specify the dataset path for LS (specially when it's running in docker)
+    KEEP_LABELSTUDIO_TASKS: bool = Field(False, description="After creating the task files, they can be deleted")
     # TODO this for later will be related to annotation_extra (maybe name it experiment)
     LABELSTUDIO_LABEL_CONFIG_FILENAME: str = "annotation_test.xml"
     # TEST MODE

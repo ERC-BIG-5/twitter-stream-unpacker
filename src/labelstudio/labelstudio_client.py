@@ -1,5 +1,6 @@
 import datetime
 import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -69,9 +70,10 @@ class LabelStudioManager:
         # this accesses the database and creates json-files
         labelstudio_task_path = self.get_labelstudio_task_path(settings)
         create_annotation_label_ds(settings, labelstudio_task_path)
-
+        # use local_storage feature of labelstudio to import tasks
         self.import_ds_to_labelstudio(labelstudio_task_path, project_data.id)
-
+        if not CONFIG.KEEP_LABELSTUDIO_TASKS:
+            self.delete_labelstudio_tasks(labelstudio_task_path)
         return project_data.id
 
     def create_projects_for_db(self, platform, settings: IterationSettings, label_config_name) -> dict[str, int]:
@@ -84,6 +86,13 @@ class LabelStudioManager:
             lang_settings = SingleLanguageSettings.from_iter_settings(settings, language)
             results[language] = self.create_project(platform, lang_settings, label_config_name)
         return results
+
+    def delete_labelstudio_tasks(self, labelstudio_tasks_path: Path):
+        if labelstudio_tasks_path.is_dir():
+            shutil.rmtree(labelstudio_tasks_path)
+        else:
+            labelstudio_tasks_path.unlink(missing_ok=True)
+
 
     def _delete_all_projects(self):
         for project in self.get_projects_list():
@@ -98,19 +107,14 @@ class LabelStudioManager:
                 path=ls_stuio_relative_path.as_posix(),
                 project=project_id
             )
+            self.ls_client.import_storage.local.validate(project=project_id, id=resp.id,
+                                                                         path=ls_stuio_relative_path.as_posix())
+            sync = self.ls_client.import_storage.local.sync(resp.id)
+            print(sync)
+            self.ls_client.import_storage.local.delete(resp.id)
         except ApiError as e:
-            pass
             print(e)
             return
-        # print(resp)
-        # print(resp.id)
-        #
-        self.ls_client.import_storage.local.validate(project=project_id, id=resp.id,
-                                                                     path=ls_stuio_relative_path.as_posix())
-        # print(storage_valid)
-        sync = self.ls_client.import_storage.local.sync(resp.id)
-        print(sync)
-        delete = self.ls_client.import_storage.local.delete(resp.id)
 
     @staticmethod
     def get_labelstudio_task_path(settings: SingleLanguageSettings,
@@ -130,48 +134,11 @@ class LabelStudioManager:
 #     # ls_client.users.delete(4)
 
 
-# def main() -> None:
-#     ls_client = create_api_client()
-#     # 1. create a new project
-#     # ls_client.projects.create()
-#     project_id = None
-#     # this one is important and allows multi-coder annotations
-#     for project in ls_client.projects.list():
-#         # print(project.title)
-#         project: ls_sdk.Project
-#
-#         if project.title == "multicoder-test":
-#             print("p_id", project.id)
-#             project_id = project.id
-#             # print(project.maximum_annotations)
-#
-#     # tested. works nice!:
-#     # print(ls_client.projects.update(5, maximum_annotations=2))
-#
-#     # 2. create and sync local storage. remove it again afterward
-#     resp = ls_client.import_storage.local.create(
-#         title="local_import",
-#         path="/home/rsoleyma/projects/Annotation/local_storage",
-#         project=5
-#     )
-#     # print(resp)
-#     # print(resp.id)
-#     #
-#     storage_valid = ls_client.import_storage.local.validate(project=project_id, id=resp.id,
-#                                                             path="/home/rsoleyma/projects/Annotation/local_storage")
-#     # print(storage_valid)
-#     sync = ls_client.import_storage.local.sync(resp.id)
-#     print(sync)
-#     delete = ls_client.import_storage.local.delete(resp.id)
-#     print(delete)
-
-
 if __name__ == "__main__":
-    pass
     # main()
     # delete_test_user()
-    # ls_mgmt = LabelStudioManager()
-    # ls_mgmt._delete_all_projects()
+    ls_mgmt = LabelStudioManager()
+    ls_mgmt._delete_all_projects()
     # p = ls_mgmt.create_project("twitter", IterationSettings(2022, 1, {"en"}, CONFIG.ANNOT_EXTRA,
     #                                                         ), CONFIG.LABELSTUDIO_LABEL_CONFIG_FILENAME)
     # print(p.dict())
