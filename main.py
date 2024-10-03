@@ -5,6 +5,7 @@ from src.labelstudio.labelstudio_client import LabelStudioManager
 from src.mutli_func_iter import IterationSettings, complex_main_generic_all_data
 from src.process_methods.annotation_db_method import AnnotationDBMethod
 from src.process_methods.index_db_method import IndexEntriesDB
+from src.process_methods.media_filter import MediaFilterMethod
 from src.process_methods.post_filter_method import PostFilterMethod
 from src.process_methods.stats_method import StatsCollectionMethod
 from src.status import MainStatus, MonthDatasetStatus
@@ -12,10 +13,11 @@ from src.util import year_month_str
 
 
 def reset() -> None:
-    delete_resp = input(f"Are you sure, you want to reset all data?"
-                        f"y/ other key\n")
-    if not delete_resp == "y":
-        return
+    if not CONFIG.TEST_MODE:
+        delete_resp = input(f"Are you sure, you want to reset all data?"
+                            f"y/ other key\n")
+        if not delete_resp == "y":
+            return
     if MAIN_STATUS_FILE_PATH.exists():
         MAIN_STATUS_FILE_PATH.unlink()
     for db in BASE_DBS_PATH.glob("*"):
@@ -26,6 +28,7 @@ def reset() -> None:
 
 def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[MonthDatasetStatus]):
     complex_main_generic_all_data(settings, month_ds_status, [PostFilterMethod,
+                                                              MediaFilterMethod,
                                                               StatsCollectionMethod,
                                                               IndexEntriesDB,
                                                               AnnotationDBMethod])
@@ -42,7 +45,7 @@ def main() -> None:
     if ym_s not in main_status.year_months:
         print(f"year month: {ym_s} not included")
         return
-    settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES)
+    settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)
     month_status = main_status.year_months[ym_s]
 
     # main process going through the dump folder

@@ -1,20 +1,16 @@
-import datetime
 import json
 import shutil
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Optional
 
-from label_studio_sdk._extensions.pager_ext import SyncPagerExt
-from label_studio_sdk.client import LabelStudio
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.consts import LABELSTUDIO_TASK_PATH, logger, LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH
-from src.db.db import annotation_db_path, init_db
+from src.consts import logger, BASE_LABELSTUDIO_DATA_PATH
+from src.db.db import init_db, main_db_path2
 from src.db.models import DBAnnot1Post
-from src.models import IterationSettings
-from src.status import MonthDatasetStatus
+from src.models import SingleLanguageSettings
 
 
 @dataclass
@@ -22,6 +18,7 @@ class LabelstudioTask:
     post_text: str
     post_url: Optional[str]
     has_media: bool = field(default=False)
+    image: Optional[str]  = None
 
 def dump_labelstudio_tasks(ls_tasks: list[LabelstudioTask], path: Path,
                            single_file: bool = False,
@@ -37,37 +34,20 @@ def dump_labelstudio_tasks(ls_tasks: list[LabelstudioTask], path: Path,
             print(f"labelstudio tasks already exist: {path}, skipping, set rewrite to delete previous data")
             return
     if single_file:
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump([asdict(task) for task in ls_tasks], f)
+        with open(path, "w", encoding="utf-8") as fout:
+            json.dump([asdict(task) for task in ls_tasks], fout)
     else:
         path.mkdir(parents=True, exist_ok=True)
         for idx, task in enumerate(ls_tasks):
             (path / f"{str(idx)}.json").write_text(json.dumps(asdict(task), ensure_ascii=False), encoding="utf-8")
 
 
-def get_labelstudio_task_path(year: int, month: int, language: str, annotation_extra: str = "",
-                              single_file: bool = False) -> Path:
-    f_stem = annotation_db_path(year, month, language, annotation_extra=annotation_extra).stem
-    if single_file:
-        return LABELSTUDIO_TASK_PATH / f_stem
-    else:
-        return LABELSTUDIO_TASK_PATH / f"{f_stem}.json"
-
-
-def create_annotation_label_ds(year: int, month: int, language: str, annotation_extra: str, single_file: bool = False):
-    session: Session = init_db(annotation_db_path(year, month, language, annotation_extra=annotation_extra))()
+def create_annotation_label_ds(settings: SingleLanguageSettings,
+                               task_path: Path,
+                               single_file: bool = False) -> None:
+    session: Session = init_db(main_db_path2(settings))()
     posts = session.execute(select(DBAnnot1Post).order_by(DBAnnot1Post.date_created)).scalars().all()
     label_entries = [
         LabelstudioTask(p.text, p.post_url, p.contains_media or False) for p in posts
     ]
-    fp = get_labelstudio_task_path(year, month, language, annotation_extra=annotation_extra, single_file=single_file)
-    dump_labelstudio_tasks(label_entries, fp, single_file)
-
-
-def create_annotation_label_datasets(settings: IterationSettings, status: MonthDatasetStatus):
-    for language in settings.languages:
-        create_annotation_label_ds(year=settings.year,
-                                   month=settings.month,
-                                   language=language,
-                                   annotation_extra=settings.annotation_extra)
-
+    dump_labelstudio_tasks(label_entries, task_path, single_file)

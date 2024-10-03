@@ -96,6 +96,7 @@ class DBAnnot1Post(Base):
     text: Mapped[str] = mapped_column(String(300))
     contains_media: Mapped[bool] = mapped_column(Boolean, nullable=True)
     post_url: Mapped[str] = mapped_column(String(60), nullable=False)
+    extra: Mapped[JSON] = mapped_column(JSON, nullable=True)
 
     text_relevant: Mapped[Annot1Relevant] = mapped_column(Enum(Annot1Relevant), nullable=True)
     text_class: Mapped[Annot1Corine] = mapped_column(Enum(Annot1Corine), nullable=True)

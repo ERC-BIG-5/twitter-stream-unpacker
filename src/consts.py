@@ -17,17 +17,18 @@ ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
 LOGS_BASE_PATH = BASE_DATA_PATH / "logs"
 
 BASE_LABELSTUDIO_DATA_PATH = BASE_DATA_PATH / "labelstudio"
-LABELSTUDIO_TASK_PATH = BASE_LABELSTUDIO_DATA_PATH / "labelstudio_tasks"
+
 LABELSTUDIO_LABEL_CONFIGS_PATH = BASE_LABELSTUDIO_DATA_PATH / "label_configs"
 # BASE_GENERATED_PROJECTS_PATH = BASE_DATA_PATH / "generated_projects"
 GENERATED_PROJECTS_INFO_PATH = BASE_LABELSTUDIO_DATA_PATH / "info.json"
 
 ANNOT_EXTRA_TEST_ROUND = "1"
 ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
+ANOOT_EXTRA_TEST_HAS_MEDIA = "1m"
 
 
-for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_STAT_PATH, LABELSTUDIO_TASK_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
-          BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_TASK_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH]:
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
+          BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH]:
     p.mkdir(parents=True, exist_ok=True)
 
 if not GENERATED_PROJECTS_INFO_PATH.exists():
@@ -60,6 +61,8 @@ class Config(BaseSettings):
     # LABLESTUDIO
     LS_BASE_URL: Optional[str] = "http://localhost:8080/"
     LABELSTUDIO_ACCESS_TOKEN: Optional[str] = None
+    LABELSTUDIO_TASK_PATH: str
+    LABELSTUDIO_CONFIG_TASK_BASE_PATH: str # this is to specify the dataset path for LS (specially when its running in docker)
     # TODO this for later will be related to annotation_extra (maybe name it experiment)
     LABELSTUDIO_LABEL_CONFIG_FILENAME: str = "annotation_test.xml"
     # TEST MODE
@@ -93,3 +96,4 @@ METHOD_STATS = "stats"
 METHOD_INDEX_DB = "index"
 METHOD_SCHEMA = "schema"
 METHOD_ANNOTATION_DB = "annotation"
+METHOD_MEDIA_FILTER = "media-filter"

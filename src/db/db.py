@@ -10,6 +10,7 @@ from sqlalchemy_utils import create_database
 
 from src.consts import CONFIG, logger, MAIN_DB, ANNOTATION_DB, BASE_DBS_PATH
 from src.db.models import Base, DBAnnot1Post
+from src.models import SingleLanguageSettings
 
 
 def _get_month_short_name(month_number: int) -> str:
@@ -19,14 +20,20 @@ def _get_month_short_name(month_number: int) -> str:
 
 def _db_path(db_type: str, year: int, month: int, language: str = "XXX", platform: str = "twitter") -> str:
     # jan,feb,mar, ...
-    #month_short_name = _get_month_short_name(month).lower()
+    # month_short_name = _get_month_short_name(month).lower()
     lang = language.ljust(3, "_")
-    return f'{db_type}_{year}_{str(month).rjust(2,"0")}_{lang}_{platform}.sqlite'
+    return f'{db_type}_{year}_{str(month).rjust(2, "0")}_{lang}_{platform}.sqlite'
 
 
 def main_db_path(year: int, month: int, language: str = "", annotation_extra: str = "",
                  platform: str = "twitter") -> Path:
     return BASE_DBS_PATH / _db_path(annotation_extra, year, month, language, platform)
+
+
+def main_db_path2(settings: SingleLanguageSettings,
+                  platform: str = "twitter") -> Path:
+    return BASE_DBS_PATH / _db_path(settings.annotation_extra, settings.year, settings.month, settings.language,
+                                    platform)
 
 
 @deprecated(reason="we should only use one db for each month")

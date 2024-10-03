@@ -18,3 +18,13 @@ def check_contains_media(post: dict) -> Optional[bool]:
         if "media" in ent_dict:
             return True
         return None
+
+def get_media(post: dict) -> Optional[list[str]]:
+
+    for entities_dict_name in ["entities", "exextended_entities"]:
+        ent_dict = post.get(entities_dict_name, {})
+        if "media" in ent_dict:
+            media_urls: list[str] = []
+            for item in ent_dict["media"]:
+                media_urls.append(item['media_url_https'])
+            return media_urls
