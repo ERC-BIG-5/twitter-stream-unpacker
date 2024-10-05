@@ -1,16 +1,16 @@
 import io
-from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import cast, Type, Any, Optional
+from typing import cast, Optional, Type
 
 import jsonlines
 from tqdm import tqdm
 
 from src.consts import logger, locationindex_type, CONFIG
-from src.models import IterationSettings, ProcessCancel
+from src.models import IterationSettings, ProcessCancel, MethodDefinition
 from src.process_methods.abstract_method import IterationMethod
-from src.status import MainStatus, MonthDatasetStatus
+from src.status import MonthDatasetStatus
 from src.util import get_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data
+
 
 def _generic_process_jsonl_entry(jsonl_entry: dict,
                                  location_index: locationindex_type,
@@ -73,9 +73,23 @@ def _generic_process_dump(dump_path: Path, methods: list[IterationMethod]):
             break
 
 
+def get_method_type(method_def: MethodDefinition)-> Type[IterationMethod]:
+    if method_def.method_type:
+        return method_def.method_type
+    else:
+        raise NotImplemented("getting method type by its name is not implemented")
+
+def create_methods(settings: IterationSettings, methods: list[MethodDefinition]) -> list[IterationMethod]:
+    method_types = [get_method_type(m) for m in methods]
+    _methods = [method_type(settings, m_definition.config) for method_type, m_definition in list(zip(method_types, methods))]
+    _method_dict = {method.name: method for method in _methods}
+    for method in _methods:
+        method.set_methods(_method_dict)
+    return _methods
+
 def complex_main_generic_all_data(settings: IterationSettings,
                                   status: Optional[MonthDatasetStatus],
-                                  methods: list[Type[IterationMethod]]):
+                                  methods: list[IterationMethod]):
     if CONFIG.TEST_MODE:
         logger.info("Test-mode on")
     dump_path = get_dump_path(settings.year, settings.month)
@@ -83,14 +97,9 @@ def complex_main_generic_all_data(settings: IterationSettings,
         logger.error(f"dumppath {dump_path} does not exist")
         return
     # call process func
-    _methods = [method(settings) for method in methods]
-    _method_dict = {method.name: method for method in _methods}
-    for method in _methods:
-        method.set_methods(_method_dict)
+    _generic_process_dump(dump_path, methods)
 
-    _generic_process_dump(dump_path, _methods)
-
-    for method in _methods:
+    for method in methods:
         if status:
             method.set_ds_status_field(status)
         method.finalize()

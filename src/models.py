@@ -1,5 +1,8 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Type, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.process_methods.abstract_method import IterationMethod
 
 
 @dataclass
@@ -24,6 +27,13 @@ class SingleLanguageSettings:
                                       iteration_settings.month,
                                       language,
                                       iteration_settings.annotation_extra)
+
+
+@dataclass
+class MethodDefinition:
+    method_name: str
+    method_type: Optional[Type["IterationMethod"]] = None
+    config: Optional[dict] = None
 
 
 class ProcessCancel:

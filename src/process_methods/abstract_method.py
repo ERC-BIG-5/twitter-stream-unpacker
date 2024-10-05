@@ -8,11 +8,13 @@ from src.status import MonthDatasetStatus, MainStatus
 
 class IterationMethod(ABC):
 
-    def __init__(self, settings: IterationSettings):
+    def __init__(self, settings: IterationSettings, config: Optional[dict]):
         self.settings = settings
         self.main_status: Optional[MainStatus] = None
-        self._methods = dict[str, "IterationMethod"]
+        self.config = config
+        self._methods: dict[str, "IterationMethod"] = {}
         self.current_result: Optional[Any] = None
+
 
     def set_methods(self, methods: dict[str, "IterationMethod"]):
         self._methods = methods

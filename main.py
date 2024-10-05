@@ -2,7 +2,9 @@ from typing import Optional
 
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH
 from src.labelstudio.labelstudio_client import LabelStudioManager
-from src.mutli_func_iter import IterationSettings, complex_main_generic_all_data
+from src.models import MethodDefinition
+from src.mutli_func_iter import IterationSettings, complex_main_generic_all_data, create_methods
+from src.process_methods.abstract_method import IterationMethod
 from src.process_methods.annotation_db_method import AnnotationDBMethod
 from src.process_methods.index_db_method import IndexEntriesDB
 from src.process_methods.media_filter import MediaFilterMethod
@@ -26,12 +28,15 @@ def reset() -> None:
         stats_file.unlink()
 
 
-def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[MonthDatasetStatus]):
-    complex_main_generic_all_data(settings, month_ds_status, [PostFilterMethod,
-                                                              MediaFilterMethod,
-                                                              StatsCollectionMethod,
-                                                              IndexEntriesDB,
-                                                              AnnotationDBMethod])
+def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[MonthDatasetStatus],
+                    methods: list[IterationMethod]):
+    # complex_main_generic_all_data(settings, month_ds_status, [PostFilterMethod,
+    #                                                           MediaFilterMethod,
+    #                                                           StatsCollectionMethod,
+    #                                                           IndexEntriesDB,
+    #                                                           AnnotationDBMethod])
+
+    complex_main_generic_all_data(settings, month_ds_status, methods)
 
 
 def main() -> None:
@@ -48,16 +53,18 @@ def main() -> None:
     settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)
     month_status = main_status.year_months[ym_s]
 
+    methods = create_methods(settings,
+                             [MethodDefinition(method_name=PostFilterMethod.name, method_type=PostFilterMethod)])
     # main process going through the dump folder
-    iter_dumps_main(settings, month_status)
+    iter_dumps_main(settings, month_status, methods)
     # checking label-studio project
-    if not month_status.label_studio_project_ids:
-        ls_client = LabelStudioManager()
-        month_status.label_studio_project_ids = ls_client.create_projects_for_db("twitter",
-                                                                                 settings,
-                                                                                 CONFIG.LABELSTUDIO_LABEL_CONFIG_FILENAME)
-
-    main_status.print_database_status(month_status)
+    # if not month_status.label_studio_project_ids:
+    #     ls_client = LabelStudioManager()
+    #     month_status.label_studio_project_ids = ls_client.create_projects_for_db("twitter",
+    #                                                                              settings,
+    #                                                                              CONFIG.LABELSTUDIO_LABEL_CONFIG_FILENAME)
+    #
+    # main_status.print_database_status(month_status)
     if main_status:
         main_status.store_status()
 
