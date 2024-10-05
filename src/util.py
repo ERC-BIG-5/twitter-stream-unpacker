@@ -81,3 +81,9 @@ def post_date(ts: int | str) -> datetime:
 
 def year_month_str(year: int, month: int) -> str:
     return f"{year:04d}-{month:02d}"
+
+def get_post_text(post_data: dict) -> str:
+    if post_data["truncated"]:
+        return post_data["extended_tweet"]["full_text"]
+    else:
+        return post_data["text"]

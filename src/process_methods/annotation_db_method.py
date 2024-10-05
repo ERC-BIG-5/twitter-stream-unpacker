@@ -12,7 +12,7 @@ from src.models import IterationSettings
 from src.post_filter import check_contains_media, get_media
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
-from src.util import post_date, post_url
+from src.util import post_date, post_url, get_post_text
 
 
 @dataclass
@@ -99,17 +99,17 @@ class AnnotPostCollection:
                     if not col_entry:
                         print(f"Missing post for: {lang}-day:{day}-hour:{hour}")
 
-    def create_annot1(self, post: dict,
+    def create_annot1(self, post_data: dict,
                       location_index: Optional[tuple[str, str, str, int]] = None) -> DBAnnot1Post:
         db_post = DBAnnot1Post(
-            post_url=post_url(post),
+            post_url=post_url(post_data),
             location_index=[],  # todo, pass with the rest
-            platform_id=post['id_str'],
-            date_created=post_date(post['timestamp_ms']),
-            language=post['lang'],
-            text=post['text'],
-            contains_media=check_contains_media(post),
-            extra={"media": get_media(post)}
+            platform_id=post_data['id_str'],
+            date_created=post_date(post_data['timestamp_ms']),
+            language=post_data['lang'],
+            text=get_post_text(post_data),
+            contains_media=check_contains_media(post_data),
+            extra={"media": get_media(post_data)}
         )
         db_post.set_date_columns()
         db_post.location_index = location_index
