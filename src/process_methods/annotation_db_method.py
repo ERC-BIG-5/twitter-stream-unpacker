@@ -27,6 +27,8 @@ class AnnotPostCollection:
     def __init__(self, languages: set[str], year: int, month: int, annot_extr: str):
         self._col: dict[str, dict[int, dict[int, Optional[AnnotCollectionEntry]]]] = {}
         self._language_sessions: dict[str, Session] = {}
+        # self.jsonl_files: list[str] = []
+        # self.last_post_date = None
 
         for lang in languages:
             self._col[lang] = {}
@@ -45,6 +47,34 @@ class AnnotPostCollection:
         """
         put into an hour slot, if would be the newest in there
         return AnnotCollectionEntry if it gets inserted
+        """
+        # SOME DEBUG LOGS, TRYING TO FIGURE OUT, HOW THE FILES RELATE TO TIMES.
+        # SEE OUTPUT BELOW
+        # LOG_POST_DT = False
+        # if not self.jsonl_files or self.jsonl_files[-1] != location_index[2]:
+        #     self.jsonl_files.append(location_index[2])
+        #     time_s = location_index[2].split(".")[0].split("/")[1]
+        #     LOG_POST_DT = True
+        #     file_dt = datetime.strptime(time_s, "%Y%m%d%H%M%S")
+        #     print(time_s, file_dt)
+        # post_date_ = post_date(post_data['timestamp_ms'])
+        # if LOG_POST_DT:
+        #     print(post_data["created_at"], " //// ", post_date_)
+        #     print(self.last_post_date)
+        #     print("----")
+        # self.last_post_date = post_date_
+        """
+        20220101000000 2022-01-01 00:00:00
+        Fri Dec 31 23:59:55 +0000 2021  ////  2022-01-01 00:59:55
+        None
+        ----
+        20220101000100 2022-01-01 00:01:00
+        Sat Jan 01 00:00:54 +0000 2022  ////  2022-01-01 01:00:54
+        2022-01-01 01:00:53
+        ----
+        20220101000200 2022-01-01 00:02:00
+        Sat Jan 01 00:01:51 +0000 2022  ////  2022-01-01 01:01:51
+        2022-01-01 01:01:48
         """
         post_date_ = post_date(post_data['timestamp_ms'])
         day = post_date_.day
@@ -112,7 +142,7 @@ class AnnotationDBMethod(IterationMethod):
         return METHOD_ANNOTATION_DB
 
     def _process_data(self, post_data: dict, location_index: locationindex_type) -> Any:
-        added_post = self.post_collection.add_post(post_data, location_index)
+        self.post_collection.add_post(post_data, location_index)
 
     def finalize(self):
         self.post_collection.validate()

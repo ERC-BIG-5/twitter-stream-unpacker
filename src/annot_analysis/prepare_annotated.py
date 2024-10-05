@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import sqlalchemy
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.consts import ANNOTATED_BASE_PATH
+from src.consts import ANNOTATED_BASE_PATH, BASE_DATA_PATH
 from src.db.db import annotation_db_path, init_db
 from src.db.models import Annot1Relevant, Annot1Corine, DBAnnot1PostFLEX
 
@@ -16,7 +17,11 @@ def get_annotation_folder(year: int, month: int, language: str, annotation_extra
 
 
 def get_analysed_files(year: int, month: int, language: str, annotation_extra: str = "") -> list[Path]:
-    return list(get_annotation_folder(year, month, language, annotation_extra).glob("*.sqlite"))
+    annotation_folder = get_annotation_folder(year, month, language, annotation_extra=annotation_extra)
+    if not annotation_folder.exists():
+        print(f"{annotation_folder.relative_to(BASE_DATA_PATH)} does not exist")
+        return []
+    return list(annotation_folder.glob("*.sqlite"))
 
 
 @dataclass
@@ -36,9 +41,19 @@ annot_groups = [("text_relevant", Annot1Relevant),
                 ("media_class", Annot1Corine)]
 
 
-def prepare_sqlite_annotations(year: int, month: int, language: str, annotation_extra) -> dict[str, RowResult]:
-    dbs: list[Path] = get_analysed_files(year, month, language, annotation_extra)
+def fix(col, val) -> str:
+    #print(col,ec,val)
+    if col == "text_relevant":
+        if val in ["y","R"]:
+            return "r"
+        elif val == "n":
+            return "n"
+    return val
 
+def prepare_sqlite_annotations(year: int, month: int, language: str, annotation_extra: Optional[str] = None) -> dict[str, RowResult]:
+    dbs: list[Path] = get_analysed_files(year, month, language, annotation_extra)
+    if not dbs:
+        print("no databases")
     # coder, rows
     broken_rows: dict[str, list[int]] = {}
     results: dict[str, RowResult] = {}
@@ -71,17 +86,18 @@ def prepare_sqlite_annotations(year: int, month: int, language: str, annotation_
                     val = getattr(e, col)
                     if not val:
                         continue
+                    val = fix(col,val)
                     attr = ec(val)
                     getattr(row_results, col).setdefault(attr, []).append(coder)
                     # class only when its marked relevant
                     if col.endswith("_class"):
                         relevant_col = col.split("_")[0] + "_relevant"
-                        if getattr(e, relevant_col) != "r":
-                            print(f"entry {e.id}: has '{col}' set but not '{relevant_col}'")
+                        if fix(relevant_col, getattr(e, relevant_col)) == "n":
+                            print(f"{coder}: entry {e.id}: has '{col}' set but not '{relevant_col}'")
                             broken.append(e.id)
                             continue
                 except ValueError:
-                    print(f"entry {e.id}: has wrong '{col}' value: {getattr(e, col)}")
+                    print(f"{coder}: entry {e.id}: has wrong '{col}' value: {getattr(e, col)}")
                     broken.append(e.id)
 
         # print(broken_rows)

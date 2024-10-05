@@ -60,6 +60,8 @@ class LabelStudioManager:
 
         project_data = self.ls_client.projects.create(title=title,
                                                       label_config=label_config,
+                                                      enable_empty_annotation=False,
+                                                      #show_overlap_first=False,
                                                       maximum_annotations=20)
 
         # NICE TO HAVE
@@ -92,7 +94,6 @@ class LabelStudioManager:
             shutil.rmtree(labelstudio_tasks_path)
         else:
             labelstudio_tasks_path.unlink(missing_ok=True)
-
 
     def _delete_all_projects(self):
         for project in self.get_projects_list():
