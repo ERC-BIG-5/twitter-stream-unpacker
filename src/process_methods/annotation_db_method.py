@@ -1,8 +1,9 @@
 import calendar
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from src.consts import METHOD_ANNOTATION_DB, locationindex_type, METHOD_FILTER, METHOD_MEDIA_FILTER, logger
@@ -19,16 +20,16 @@ from src.util import post_date, post_url, get_post_text
 class AnnotCollectionEntry:
     dt: datetime
     post_data: dict
-    location_index: tuple[str, str, str, int]
+    location_index: locationindex_type
 
 
 class AnnotPostCollection:
 
-    def __init__(self, languages: set[str], year: int, month: int, annot_extr: str):
+    def __init__(self, languages: set[str], year: int, month: int, annot_extr: str, skip_minutes: int = 0):
         self._col: dict[str, dict[int, dict[int, Optional[AnnotCollectionEntry]]]] = {}
         self._language_sessions: dict[str, Session] = {}
-        # self.jsonl_files: list[str] = []
-        # self.last_post_date = None
+
+        self.skip_minutes = skip_minutes
 
         for lang in languages:
             self._col[lang] = {}
@@ -82,6 +83,8 @@ class AnnotPostCollection:
         post_lang = post_data['lang']
         current = self._col[post_lang][day][hour]
         if not current:
+            if post_date_.minute < self.skip_minutes:
+                return None
             logger.debug(f"set {day}.{hour}")
             ace = AnnotCollectionEntry(post_date_, post_data, location_index)
             self._col[post_lang][day][hour] = ace
@@ -128,15 +131,27 @@ class AnnotPostCollection:
             session.close()
 
 
+class AnnotationDBMethodConfig(BaseModel):
+    # we noticed that the first posts for each hour are often automated
+    skip_minutes: Optional[int] = 0
+
+    model_config = ConfigDict(extra='ignore')
+
+
 class AnnotationDBMethod(IterationMethod):
 
-    def __init__(self, settings: IterationSettings):
-        super().__init__(settings)
+    def __init__(self, settings: IterationSettings, config: Union[dict, AnnotationDBMethodConfig]):
+        super().__init__(settings, config)
+        if isinstance(config, dict):
+            self.config = AnnotationDBMethodConfig.model_validate(config)
+        else:
+            self.config: AnnotationDBMethodConfig
 
         self.post_collection = AnnotPostCollection(settings.languages,
                                                    settings.year,
                                                    settings.month,
-                                                   settings.annotation_extra)
+                                                   settings.annotation_extra,
+                                                   self.config.skip_minutes)
 
     @property
     def name(self) -> str:

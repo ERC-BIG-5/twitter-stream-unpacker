@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional, Type, TYPE_CHECKING
+from typing import Optional, Type, TYPE_CHECKING, Union
+
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from src.process_methods.abstract_method import IterationMethod
@@ -33,7 +35,7 @@ class SingleLanguageSettings:
 class MethodDefinition:
     method_name: str
     method_type: Optional[Type["IterationMethod"]] = None
-    config: Optional[dict] = None
+    config: Optional[Union[dict, BaseModel]] = None
 
 
 class ProcessCancel:

@@ -11,8 +11,8 @@ PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
 BASE_DATA_PATH = PROJECT_PATH / "data"
 BASE_DBS_PATH = BASE_DATA_PATH / "sqlite_dbs"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
+BASE_REPACK_PATH = BASE_DATA_PATH / "repack"
 MAIN_STATUS_FILE_PATH = BASE_DATA_PATH / "status.json"
-REPACK_BASE_PATH = BASE_DATA_PATH / "repack"
 
 ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
 LOGS_BASE_PATH = BASE_DATA_PATH / "logs"
@@ -27,7 +27,7 @@ ANNOT_EXTRA_TEST_ROUND = "1"
 ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
 ANOOT_EXTRA_TEST_HAS_MEDIA = "1m"
 
-for p in [BASE_DATA_PATH, BASE_DBS_PATH, REPACK_BASE_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH]:
     p.mkdir(parents=True, exist_ok=True)
 
@@ -42,18 +42,19 @@ ANNOTATION_DB = "ANNO"
 ## LOGGER
 logger = getLogger("twitter-stream-unpacker")
 
-
+DATA_SOURCE_DUMP = "dump"
+DATA_SOURCE_REPACK = "repack"
 # CONFIG
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
-
+    DATA_SOURCE: Literal["dump"] | Literal["repack"]
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
     LANGUAGES: list[str] = ["en"]  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
     RESET_DATA: bool = False  # for main
     ANNOT_EXTRA: str = ANNOT_EXTRA_TEST_ROUND
     TEST_MODE: bool = False  #
     YEAR: int = 2022
-    MONTH: int = 2
+    MONTH: int = 1
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
     # for something else,... setting up a pg db
@@ -86,6 +87,14 @@ if not logger.handlers:
 
     logger.setLevel(CONFIG.LOG_LEVEL)
     file_handler.setLevel(CONFIG.FILE_LOG_LEVEL)
+
+def get_logger(fn:str, level: str= "INFO") -> logging.Logger:
+    logger = logging.getLogger("twitter-stream-unpacker." + fn)
+    # handler = StreamHandler()
+    # handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
+    # logger.addHandler(handler)
+    logger.setLevel(level)
+    return logger
 
 # this is for the simple_generic_iter
 

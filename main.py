@@ -1,14 +1,14 @@
 from typing import Optional
 
-from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH
-from src.labelstudio.labelstudio_client import LabelStudioManager
-from src.models import MethodDefinition
-from src.mutli_func_iter import IterationSettings, complex_main_generic_all_data, create_methods
-from src.process_methods.abstract_method import IterationMethod
-from src.process_methods.annotation_db_method import AnnotationDBMethod
-from src.process_methods.index_db_method import IndexEntriesDB
-from src.process_methods.media_filter import MediaFilterMethod
-from src.process_methods.pack_data import PackEntries
+from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, DATA_SOURCE_DUMP, \
+    DATA_SOURCE_REPACK
+
+from src.data_iterators.base_data_iterator import base_month_data_iterator
+from src.data_iterators.repacked_data_iterator import repack_iterator
+from src.models import MethodDefinition, IterationSettings
+from src.process_methods.abstract_method import IterationMethod, create_methods
+from src.process_methods.annotation_db_method import AnnotationDBMethod, AnnotationDBMethodConfig
+from src.process_methods.repack_data import PackEntries
 from src.process_methods.post_filter_method import PostFilterMethod
 from src.process_methods.stats_method import StatsCollectionMethod
 from src.status import MainStatus, MonthDatasetStatus
@@ -37,7 +37,7 @@ def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[Month
     #                                                           IndexEntriesDB,
     #                                                           AnnotationDBMethod])
 
-    complex_main_generic_all_data(settings, month_ds_status, methods)
+    base_month_data_iterator(settings, month_ds_status, methods)
 
 
 def main() -> None:
@@ -56,12 +56,19 @@ def main() -> None:
 
     filter_method = MethodDefinition(
         method_name=str(PostFilterMethod.name),
-        method_type=PostFilterMethod)
+        method_type=PostFilterMethod,
+        config = {})
 
     collect_hashtags_method = MethodDefinition(
         method_name=str(StatsCollectionMethod.name),
         method_type=StatsCollectionMethod,
         config={"collect_hashtags": True}
+    )
+
+    annotation_db_method = MethodDefinition(
+        method_name=str(AnnotationDBMethod.name),
+        method_type=AnnotationDBMethod,
+        config=AnnotationDBMethodConfig(skip_minutes=3)
     )
 
     repack_method = MethodDefinition(method_name=str(PackEntries.name),
@@ -71,7 +78,18 @@ def main() -> None:
     methods = create_methods(settings,
                              [filter_method, repack_method])
     # main process going through the dump folder
-    iter_dumps_main(settings, month_status, methods)
+
+    if CONFIG.TEST_MODE:
+        logger.info("Test-mode on")
+
+    # CHECK ITER SOURCE
+
+    if CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
+        iter_dumps_main(settings, month_status, methods)
+    elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
+        repack_iterator(settings, month_status, methods)
+    else:
+        logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
     # checking label-studio project
     # if not month_status.label_studio_project_ids:
     #     ls_client = LabelStudioManager()

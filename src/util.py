@@ -7,12 +7,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Generator, Union, Optional
 
+from deprecated import deprecated
 from jsonlines import jsonlines
 
 from src.consts import logger, CONFIG
 
 
-def get_dump_path(year: int, month: int) -> Path:
+def get_base_dump_path(year: int, month: int) -> Path:
     return CONFIG.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{year}-{str(month).rjust(2, '0')}"
 
 
@@ -28,6 +29,10 @@ def list_jsonl_file(path: Path) -> Generator[Path, None, None]:
 def tarfile_datestr(tar_file: Path) -> str:
     return tar_file.name.lstrip("twitter-stream-").rstrip(".tar")
 
+
+def read_gzip_file(path: Path) -> bytes:
+    with gzip.GzipFile(path) as gz_bytes:
+        return gz_bytes.read()
 
 def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, None]:
     with tarfile.open(tar_file, 'r') as tar:
@@ -77,6 +82,11 @@ def post_url(data: dict) -> str:
     return f"https://x.com/{data['user']['screen_name']}/status/{data['id']}"
 
 
+def post_date2(post_data: dict) -> datetime:
+    return datetime.fromtimestamp(int(int(post_data['timestamp_ms']) / 1000))
+
+
+@deprecated(reason="use post_date2")
 def post_date(ts: int | str) -> datetime:
     return datetime.fromtimestamp(int(int(ts) / 1000))
 

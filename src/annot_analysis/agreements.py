@@ -77,13 +77,17 @@ def calc_agreements(ana_ds: dict[str, RowResult]):
     return agreements
 
 
-def select_non_agreements(results: dict[str, RowResult],
-                          result_path:Path,
-                          entries: list[DBAnnot1PostFLEX]):
-    diff_rows:dict[int,list[tuple[str,dict]]] = {}
+def split_by_agreements(results: dict[str, RowResult],
+                        result_path:Path,
+                        entries: list[DBAnnot1PostFLEX]):
+    # {id: (col, class)}
+    agreed_rows: dict[int,list[tuple[str,str]]] = {}
+
+    # {id: [<col>, {class: [coders]}]}
+    diff_rows:dict[int,list[tuple[str,dict[str,list[str]]]]] = {}
+
     all_keys_needed = set()
     for id, row in results.items():
-        pass
         for col, data in asdict(row).items():
             if not data:
                 continue
@@ -92,10 +96,13 @@ def select_non_agreements(results: dict[str, RowResult],
                 diff_rows.setdefault(int(id), []).append((col,transform_data))
                 for col_val_needed in transform_data.keys():
                     all_keys_needed.add(f"{col}_{col_val_needed}")
-    result_file_path = result_path / "results.csv"
-    fieldnames = ["id","date_created","text", "post_url"] + list(sorted(all_keys_needed, reverse=True))
+            else:
+                agreed_rows.setdefault(int(id), []).append((col, list(data.keys())[0]))
+                pass
 
-    result_rows = []
+
+    diff_result_rows = []
+    agree_result_rows = []
     for e in entries:
         if e.id in  diff_rows:
             result_row = {
@@ -108,15 +115,38 @@ def select_non_agreements(results: dict[str, RowResult],
                 diff_col, diff = all_diff_qs
                 for val, coder in diff.items():
                     result_row[f"{diff_col}_{val}"] = "; ".join(coder)
-            result_rows.append(result_row)
+            diff_result_rows.append(result_row)
+        else:
+            # agreement
+            assert e.id in agreed_rows
+            for col in agreed_rows[e.id]:
+                if col == "text_relevant" and col[1].value == "r":
+                    print("agree relevant", e.text)
+                agree_result_rows.append({
+                    "id": e.id,
+                    "text": e.text,
+                    col[0]: col[1].value
+                })
 
-    with result_file_path.open("w", encoding="utf-8") as fout:
-        writer = DictWriter(fout, fieldnames)
+    dis_ag_fieldnames = ["id", "date_created", "text", "post_url"] + list(sorted(all_keys_needed, reverse=True))
+    disagreements_result_file_path = result_path / "disagreements_results.csv"
+    with disagreements_result_file_path.open("w", encoding="utf-8") as fout:
+        writer = DictWriter(fout, dis_ag_fieldnames)
         writer.writeheader()
-        for row in result_rows:
+        for row in diff_result_rows:
             writer.writerow(row)
 
-    return diff_rows
+    agreements_fieldnames = ["id","text","text_relevant","text_class","media_relevant"]
+
+    agreements_result_file_path = result_path / "agreements_results.csv"
+    with agreements_result_file_path.open("w", encoding="utf-8") as fout:
+        writer = DictWriter(fout, agreements_fieldnames)
+        writer.writeheader()
+        for row in agree_result_rows:
+            writer.writerow(row)
+
+    # TODO WRITE AGRREMENTS
+    return agreed_rows, diff_rows
 
 
 if __name__ == "__main__":
@@ -129,5 +159,5 @@ if __name__ == "__main__":
     db_session: Session = init_db(any_db, read_only=False)()
     entries = list(db_session.execute(select(DBAnnot1PostFLEX)).scalars().all())
 
-    select_non_agreements(results, annotation_folder, entries)
+    split_by_agreements(results, annotation_folder, entries)
     print(json.dumps(calc_agreements(results), indent=2))
