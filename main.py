@@ -8,6 +8,7 @@ from src.process_methods.abstract_method import IterationMethod
 from src.process_methods.annotation_db_method import AnnotationDBMethod
 from src.process_methods.index_db_method import IndexEntriesDB
 from src.process_methods.media_filter import MediaFilterMethod
+from src.process_methods.pack_data import PackEntries
 from src.process_methods.post_filter_method import PostFilterMethod
 from src.process_methods.stats_method import StatsCollectionMethod
 from src.status import MainStatus, MonthDatasetStatus
@@ -53,8 +54,22 @@ def main() -> None:
     settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)
     month_status = main_status.year_months[ym_s]
 
+    filter_method = MethodDefinition(
+        method_name=str(PostFilterMethod.name),
+        method_type=PostFilterMethod)
+
+    collect_hashtags_method = MethodDefinition(
+        method_name=str(StatsCollectionMethod.name),
+        method_type=StatsCollectionMethod,
+        config={"collect_hashtags": True}
+    )
+
+    repack_method = MethodDefinition(method_name=str(PackEntries.name),
+                                     method_type=PackEntries,
+                                     config={"delete_jsonl_files": True, "gzip_files": True})
+
     methods = create_methods(settings,
-                             [MethodDefinition(method_name=PostFilterMethod.name, method_type=PostFilterMethod)])
+                             [filter_method, repack_method])
     # main process going through the dump folder
     iter_dumps_main(settings, month_status, methods)
     # checking label-studio project

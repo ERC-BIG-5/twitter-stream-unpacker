@@ -12,6 +12,7 @@ BASE_DATA_PATH = PROJECT_PATH / "data"
 BASE_DBS_PATH = BASE_DATA_PATH / "sqlite_dbs"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
 MAIN_STATUS_FILE_PATH = BASE_DATA_PATH / "status.json"
+REPACK_BASE_PATH = BASE_DATA_PATH / "repack"
 
 ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
 LOGS_BASE_PATH = BASE_DATA_PATH / "logs"
@@ -26,7 +27,7 @@ ANNOT_EXTRA_TEST_ROUND = "1"
 ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
 ANOOT_EXTRA_TEST_HAS_MEDIA = "1m"
 
-for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, REPACK_BASE_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH]:
     p.mkdir(parents=True, exist_ok=True)
 
@@ -67,10 +68,10 @@ class Config(BaseSettings):
     LABELSTUDIO_LABEL_CONFIG_FILENAME: str = "annotation_test.xml"
     # TEST MODE
     TEST_NUM_TAR_FILES: int = Field(1, ge=1)
-    TEST_NUM_JSONL_FILES: int = Field(20, ge=1)
+    TEST_NUM_JSONL_FILES: int = Field(20)
 
 
-CONFIG = Config()
+CONFIG = Config() # type: ignore[call-arg]
 
 if not logger.handlers:
     logger.propagate = False

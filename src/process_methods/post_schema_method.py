@@ -15,11 +15,10 @@ class EntrySchema(IterationMethod):
     def name(self) -> str:
         return METHOD_SCHEMA
 
-    def __init__(self, settings: IterationSettings):
-        super().__init__(settings)
+    def __init__(self, settings: IterationSettings, config: dict):
+        super().__init__(settings, config)
         self.collect_num_posts = 50
         self.create_schema_from: list[dict] = []
-
 
     def _process_data(self, post_data: dict, location_index: locationindex_type):
         self.create_schema_from.append(post_data)

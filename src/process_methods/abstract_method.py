@@ -23,6 +23,7 @@ class IterationMethod(ABC):
         self.current_result = self._process_data(post_data, location_index)
         if isinstance(self.current_result, ProcessCancel):
             return self.current_result
+        return None
 
     @property
     @abstractmethod

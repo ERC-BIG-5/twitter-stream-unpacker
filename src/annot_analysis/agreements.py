@@ -5,8 +5,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Type
 
-from requests import Session
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 from statsmodels.stats.inter_rater import fleiss_kappa
 
 from src.annot_analysis.prepare_annotated import RowResult, prepare_sqlite_annotations, annot_groups, \
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     annotation_folder = get_annotation_folder(year, month, lang, extra)
     any_db = get_analysed_files(year, month, lang, extra)[0]
     db_session: Session = init_db(any_db, read_only=False)()
-    entries = db_session.execute(select(DBAnnot1PostFLEX)).scalars().all()
+    entries = list(db_session.execute(select(DBAnnot1PostFLEX)).scalars().all())
 
     select_non_agreements(results, annotation_folder, entries)
     print(json.dumps(calc_agreements(results), indent=2))

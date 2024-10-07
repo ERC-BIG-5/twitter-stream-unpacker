@@ -91,6 +91,7 @@ class AnnotPostCollection:
                 ace = AnnotCollectionEntry(post_date_, post_data, location_index)
                 self._col[post_lang][day][hour] = ace
                 return ace
+        return None
 
     def validate(self):
         for lang, days in self._col.items():

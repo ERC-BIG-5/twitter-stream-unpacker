@@ -1,10 +1,11 @@
 import bz2
 import gzip
 import io
+import json
 import tarfile
 from datetime import datetime
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Union, Optional
 
 from jsonlines import jsonlines
 
@@ -32,6 +33,7 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
     with tarfile.open(tar_file, 'r') as tar:
         relevant_members = [member for member in tar.getmembers() if
                             (member.name.endswith('.json.bz2') or member.name.endswith('.json.gz'))]
+
         # sort them (their name includes the datetime)
         def sort_key(tar_info):
             return Path(tar_info.name).stem.split('.')[0]
@@ -82,8 +84,27 @@ def post_date(ts: int | str) -> datetime:
 def year_month_str(year: int, month: int) -> str:
     return f"{year:04d}-{month:02d}"
 
+
 def get_post_text(post_data: dict) -> str:
     if post_data["truncated"]:
         return post_data["extended_tweet"]["full_text"]
     else:
         return post_data["text"]
+
+
+def get_hashtags(post_data: dict) -> list[str]:
+    return [ht["text"] for ht in post_data.get("entities", {}).get("hashtags", [])]
+
+
+def load_data(file_path: Path) -> dict:
+    return json.load(file_path.open(encoding="utf-8"))
+
+
+def write_data(data: Union[dict, list], file_path: Path, indent: Optional[int] = 2):
+    json.dump(data, file_path.open("w",encoding="utf-8"), ensure_ascii=False, indent=indent)
+
+def json_gz_stem(file: str) -> str:
+    """
+    turns '20220101/20220101000000.json.gz' into '20220101000000'
+    """
+    return Path(Path(file).stem).stem

@@ -6,8 +6,8 @@ from src.util import post_date, post_url, get_post_text
 
 class FullPostDBMethod(IterationMethod):
 
-    def __init__(self, settings: IterationSettings):
-        super().__init__(settings)
+    def __init__(self, settings: IterationSettings, config: dict):
+        super().__init__(settings, config)
 
 
 

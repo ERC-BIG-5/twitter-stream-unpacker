@@ -62,6 +62,9 @@ def _generic_process_dump(dump_path: Path, methods: list[IterationMethod]):
     logger.debug(f"dump: {dump_file_date_name}")
     # iter the tar files in the dump
     tar_files = list(iter_tar_files(dump_path))
+    if CONFIG.TEST_MODE:
+        logger.info(f"Test mode only takes {CONFIG.TEST_NUM_TAR_FILES} tar file(s)")
+        tar_files = tar_files[:CONFIG.TEST_NUM_TAR_FILES]
     for idx, tar_file in enumerate(tar_files):
         tar_file_date_name = tarfile_datestr(tar_file)
         logger.info(f"tar file: {tar_file_date_name} - {idx} / {len(tar_files)}")
@@ -69,8 +72,7 @@ def _generic_process_dump(dump_path: Path, methods: list[IterationMethod]):
         # process tar file
         _generic_process_tar_file(tar_file, location_index, methods)
         location_index.pop()
-        if CONFIG.TEST_MODE and idx == CONFIG.TEST_NUM_TAR_FILES:
-            break
+
 
 
 def get_method_type(method_def: MethodDefinition)-> Type[IterationMethod]:
