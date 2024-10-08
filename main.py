@@ -40,7 +40,7 @@ def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[Month
     base_month_data_iterator(settings, month_ds_status, methods)
 
 
-def main() -> None:
+def data_process_main():
     if CONFIG.RESET_DATA:
         reset()
     # load status
@@ -55,41 +55,62 @@ def main() -> None:
     month_status = main_status.year_months[ym_s]
 
     filter_method = MethodDefinition(
-        method_name=str(PostFilterMethod.name),
+        method_name=PostFilterMethod.name(),
         method_type=PostFilterMethod,
         config = {})
 
     collect_hashtags_method = MethodDefinition(
-        method_name=str(StatsCollectionMethod.name),
+        method_name=StatsCollectionMethod.name(),
         method_type=StatsCollectionMethod,
         config={"collect_hashtags": True}
     )
 
     annotation_db_method = MethodDefinition(
-        method_name=str(AnnotationDBMethod.name),
+        method_name=AnnotationDBMethod.name(),
         method_type=AnnotationDBMethod,
         config=AnnotationDBMethodConfig(skip_minutes=3)
     )
 
-    repack_method = MethodDefinition(method_name=str(PackEntries.name),
+    repack_method = MethodDefinition(method_name=PackEntries.name(),
                                      method_type=PackEntries,
                                      config={"delete_jsonl_files": True, "gzip_files": True})
 
-    methods = create_methods(settings,
-                             [filter_method, repack_method])
+    selected_methods = [filter_method, repack_method]
+
+    if CONFIG.CONFIRM_RUN:
+        print(f"data source: {CONFIG.DATA_SOURCE}")
+        print(f"test mode: {CONFIG.TEST_MODE}")
+        print(f"languages: {CONFIG.LANGUAGES}")
+        print(f"year month: {CONFIG.YEAR}-{CONFIG.MONTH}")
+        print(f"methods: {[m.method_name for m in selected_methods]}")
+        input("press any key to continue")
+
+    methods = create_methods(settings,selected_methods )
+
+
+
     # main process going through the dump folder
 
     if CONFIG.TEST_MODE:
         logger.info("Test-mode on")
 
     # CHECK ITER SOURCE
-
     if CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
         iter_dumps_main(settings, month_status, methods)
     elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
         repack_iterator(settings, month_status, methods)
     else:
         logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
+
+    if main_status:
+        main_status.store_status()
+
+def main() -> None:
+    data_process_main()
+
+
+
+    pass
     # checking label-studio project
     # if not month_status.label_studio_project_ids:
     #     ls_client = LabelStudioManager()
@@ -98,8 +119,7 @@ def main() -> None:
     #                                                                              CONFIG.LABELSTUDIO_LABEL_CONFIG_FILENAME)
     #
     # main_status.print_database_status(month_status)
-    if main_status:
-        main_status.store_status()
+
 
 
 if __name__ == '__main__':

@@ -49,8 +49,8 @@ class StatsCollectionMethod(IterationMethod):
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         status.stats_file_available = True
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return METHOD_STATS
 
     def _process_data(self, post_data: dict, location_index: locationindex_type):

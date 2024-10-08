@@ -153,8 +153,8 @@ class AnnotationDBMethod(IterationMethod):
                                                    settings.annotation_extra,
                                                    self.config.skip_minutes)
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return METHOD_ANNOTATION_DB
 
     def _process_data(self, post_data: dict, location_index: locationindex_type) -> Any:

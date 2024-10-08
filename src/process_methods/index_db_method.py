@@ -14,8 +14,8 @@ class IndexEntriesDB(IterationMethod):
     Create an index db entry, that allows to look up
     """
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return METHOD_INDEX_DB
 
     def __init__(self, settings: IterationSettings):

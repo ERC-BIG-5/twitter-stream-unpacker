@@ -50,8 +50,8 @@ class PackEntries(IterationMethod):
     def compatible_with_data_sources() -> list[str]:
         return [DATA_SOURCE_DUMP]
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "repack"
 
     def zip_file(self, fp: Path):

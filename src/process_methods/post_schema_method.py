@@ -11,8 +11,8 @@ from src.process_methods.abstract_method import IterationMethod
 
 class EntrySchema(IterationMethod):
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return METHOD_SCHEMA
 
     def __init__(self, settings: IterationSettings, config: dict):

@@ -20,8 +20,8 @@ class PostFilterMethod(IterationMethod):
         super().__init__(settings, config)
         self.config = PostFilterConfig.model_validate(config)
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return METHOD_FILTER
 
     def has_media_filter(self, post_data: dict) -> bool:

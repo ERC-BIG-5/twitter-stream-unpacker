@@ -47,6 +47,7 @@ DATA_SOURCE_REPACK = "repack"
 # CONFIG
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
+    
     DATA_SOURCE: Literal["dump"] | Literal["repack"]
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
     LANGUAGES: list[str] = ["en"]  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
@@ -55,6 +56,7 @@ class Config(BaseSettings):
     TEST_MODE: bool = False  #
     YEAR: int = 2022
     MONTH: int = 1
+    CONFIRM_RUN:bool = True
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
     # for something else,... setting up a pg db

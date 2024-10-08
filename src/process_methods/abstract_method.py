@@ -30,9 +30,9 @@ class IterationMethod(ABC):
     def compatible_with_data_sources() -> list[str]:
         return [DATA_SOURCE_DUMP, DATA_SOURCE_REPACK]
 
-    @property
+    @staticmethod
     @abstractmethod
-    def name(self) -> str:
+    def name() -> str:
         pass
 
     @abstractmethod
