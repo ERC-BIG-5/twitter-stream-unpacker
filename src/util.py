@@ -5,6 +5,7 @@ import json
 import tarfile
 from datetime import datetime
 from pathlib import Path
+from tarfile import ReadError
 from typing import Generator, Union, Optional
 
 from deprecated import deprecated
@@ -36,8 +37,12 @@ def read_gzip_file(path: Path) -> bytes:
 
 def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, None]:
     with tarfile.open(tar_file, 'r') as tar:
-        relevant_members = [member for member in tar.getmembers() if
-                            (member.name.endswith('.json.bz2') or member.name.endswith('.json.gz'))]
+        try:
+            relevant_members = [member for member in tar.getmembers() if
+                                (member.name.endswith('.json.bz2') or member.name.endswith('.json.gz'))]
+        except ReadError as err:
+            logger.error(f"Error getting members of tar file: {tar_file}")
+            logger.error(err)
 
         # sort them (their name includes the datetime)
         def sort_key(tar_info):
