@@ -43,6 +43,7 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
         except ReadError as err:
             logger.error(f"Error getting members of tar file: {tar_file}")
             logger.error(err)
+            return []
 
         # sort them (their name includes the datetime)
         def sort_key(tar_info):
