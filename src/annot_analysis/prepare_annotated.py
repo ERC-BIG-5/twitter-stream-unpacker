@@ -34,6 +34,13 @@ class RowResult:
     media_relevant: dict[Annot1Relevant, list[str]] = field(default_factory=dict)
     media_class: dict[Annot1Corine, list[str]] = field(default_factory=dict)
 
+    def dict(self):
+        return {col[0]: {
+            clz.value: coders for clz, coders in getattr(self, col[0]).items()
+        }
+            for col in annot_groups
+        }
+
 
 annot_groups = [("text_relevant", Annot1Relevant),
                 ("text_class", Annot1Corine),
@@ -42,15 +49,17 @@ annot_groups = [("text_relevant", Annot1Relevant),
 
 
 def fix(col, val) -> str:
-    #print(col,ec,val)
+    # print(col,ec,val)
     if col == "text_relevant":
-        if val in ["y","R"]:
+        if val in ["y", "R"]:
             return "r"
         elif val == "n":
             return "n"
     return val
 
-def prepare_sqlite_annotations(year: int, month: int, language: str, annotation_extra: Optional[str] = None) -> dict[str, RowResult]:
+
+def prepare_sqlite_annotations(year: int, month: int, language: str, annotation_extra: Optional[str] = None) -> dict[
+    str, RowResult]:
     dbs: list[Path] = get_analysed_files(year, month, language, annotation_extra)
     if not dbs:
         print("no databases")
@@ -86,7 +95,7 @@ def prepare_sqlite_annotations(year: int, month: int, language: str, annotation_
                     val = getattr(e, col)
                     if not val:
                         continue
-                    val = fix(col,val)
+                    val = fix(col, val)
                     attr = ec(val)
                     getattr(row_results, col).setdefault(attr, []).append(coder)
                     # class only when its marked relevant

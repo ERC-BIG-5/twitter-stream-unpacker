@@ -1,4 +1,5 @@
 import json
+import pickle
 from csv import DictWriter
 from dataclasses import asdict
 from enum import Enum
@@ -11,6 +12,7 @@ from statsmodels.stats.inter_rater import fleiss_kappa
 
 from src.annot_analysis.prepare_annotated import RowResult, prepare_sqlite_annotations, annot_groups, \
     get_annotation_folder, get_analysed_files
+from src.consts import BASE_DATA_PATH
 from src.db.db import init_db
 from src.db.models import DBAnnot1PostFLEX
 
@@ -52,7 +54,6 @@ def calculate_fleiss_kappa(results: list[RowResult], field_name: str, enum_class
 
 
 def calc_agreements(ana_ds: dict[str, RowResult]):
-    from src.annot_analysis.agreements import calculate_fleiss_kappa
     agreements = {}
     ana_ds_list = list(ana_ds.values())
     for col, ec in annot_groups:
@@ -148,8 +149,12 @@ def split_by_agreements(results: dict[str, RowResult],
     # TODO WRITE AGRREMENTS
     return agreed_rows, diff_rows
 
+# def serialize_result(result: dict[str,RowResult]) -> dict[str,dict[str,list[str]]]:
+#     return {
+#         k: v.dict() for k, v in result.items()
+#     }
 
-if __name__ == "__main__":
+def main():
     year, month, lang, extra = 2022, 1, "en", "1"
     results = prepare_sqlite_annotations(year, month, lang, extra)
     # print(results)
@@ -160,4 +165,16 @@ if __name__ == "__main__":
     entries = list(db_session.execute(select(DBAnnot1PostFLEX)).scalars().all())
 
     split_by_agreements(results, annotation_folder, entries)
+    pickle.dump(results, (BASE_DATA_PATH / "annotated/pickled_results/results.pickle").open("wb"))
+    print(json.dumps(calc_agreements(results), indent=2))
+
+if __name__ == "__main__":
+
+    # year, month, lang, extra = 2022, 1, "en", "1"
+    # annotation_folder = get_annotation_folder(year, month, lang, extra)
+
+    results = pickle.load((BASE_DATA_PATH / "annotated/pickled_results/results.pickle").open("rb"))
+    # this would create the csvs, but it needs sqlalchemy...
+    # split_by_agreements(results, annotation_folder, entries)
+
     print(json.dumps(calc_agreements(results), indent=2))
