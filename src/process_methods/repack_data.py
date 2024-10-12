@@ -8,7 +8,7 @@ from jsonlines import jsonlines
 from pydantic import BaseModel, ConfigDict
 
 from src.consts import locationindex_type, BASE_REPACK_PATH, get_logger, DATA_SOURCE_DUMP
-from src.models import IterationSettings
+from src.models import IterationSettings, ProcessSkipType
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 from src.util import year_month_str, post_date2
@@ -108,7 +108,7 @@ class PackEntries(IterationMethod):
     def _process_data(self, post_data: dict, location_index: locationindex_type) -> Any:
         if self.skip_day:
             if self._check_day_exists(location_index[1]):
-                return
+                return ProcessSkipType.TAR_FILE
             else:
                 self.skip_day = False
         lang = post_data["lang"]

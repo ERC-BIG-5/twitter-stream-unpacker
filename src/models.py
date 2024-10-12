@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional, Type, TYPE_CHECKING, Union
 
 from pydantic import BaseModel
@@ -42,3 +43,8 @@ class ProcessCancel:
 
     def __init__(self, reason: Optional[str] = ""):
         self.reason = reason
+
+# JSON_FILE: a minute
+# TAR_FILE: a day
+ProcessSkipType = Enum('ProcessSkipType', ['JSON_FILE', 'TAR_FILE', 'DUMP_FOLDER'])
+

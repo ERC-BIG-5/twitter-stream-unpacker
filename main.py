@@ -87,8 +87,6 @@ def data_process_main():
 
     methods = create_methods(settings,selected_methods )
 
-
-
     # main process going through the dump folder
 
     if CONFIG.TEST_MODE:

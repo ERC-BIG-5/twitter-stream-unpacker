@@ -3,6 +3,7 @@ import gzip
 import io
 import json
 import tarfile
+import zlib
 from datetime import datetime
 from pathlib import Path
 from tarfile import ReadError
@@ -61,9 +62,16 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
                     except Exception as e:
                         print(f"Error processing {member.name}: {str(e)}")
             else:
-                with gzip.GzipFile(fileobj=io.BytesIO(extracted_file.read())) as gz_bytes:
-                    yield member.name, gz_bytes.read()
-
+                try:
+                    data = extracted_file.read()
+                    with gzip.GzipFile(fileobj=io.BytesIO(data)) as gz_bytes:
+                        yield member.name, gz_bytes.read()
+                except ReadError as err:
+                    logger.error(f"Error reading {member.name}: {str(err)}")
+                    return None
+                except zlib.error as e:
+                    logger.error(f"Error reading {member.name}: {str(e)}")
+                    return None
 
 def iter_jsonl_file(fp: Path) -> Generator[dict, None, None]:
     """
