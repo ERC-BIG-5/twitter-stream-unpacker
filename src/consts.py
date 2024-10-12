@@ -1,5 +1,5 @@
 import logging
-from dataclasses import field
+from datetime import datetime
 from logging import getLogger, StreamHandler, Formatter, FileHandler
 from pathlib import Path
 from typing import Literal, Optional
@@ -83,8 +83,10 @@ if not logger.handlers:
     handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
     logger.addHandler(handler)
 
+    start_time_str = datetime.now().strftime("%Y%m%d-%H%M")
+
     file_handler = FileHandler(LOGS_BASE_PATH / "logs.txt")
-    file_handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
+    file_handler.setFormatter(Formatter(f"({start_time_str})-%(levelname)s: %(message)s"))
     logger.addHandler(file_handler)
 
     logger.setLevel(CONFIG.LOG_LEVEL)
