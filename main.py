@@ -8,6 +8,7 @@ from src.data_iterators.repacked_data_iterator import repack_iterator
 from src.models import MethodDefinition, IterationSettings
 from src.process_methods.abstract_method import IterationMethod, create_methods
 from src.process_methods.annotation_db_method import AnnotationDBMethod, AnnotationDBMethodConfig
+from src.process_methods.auto_relecanve_check_method import AutoRelevanceMethod
 from src.process_methods.repack_data import PackEntries
 from src.process_methods.post_filter_method import PostFilterMethod
 from src.process_methods.stats_method import StatsCollectionMethod
@@ -57,7 +58,7 @@ def data_process_main():
     filter_method = MethodDefinition(
         method_name=PostFilterMethod.name(),
         method_type=PostFilterMethod,
-        config = {})
+        config={})
 
     collect_hashtags_method = MethodDefinition(
         method_name=StatsCollectionMethod.name(),
@@ -75,7 +76,13 @@ def data_process_main():
                                      method_type=PackEntries,
                                      config={"delete_jsonl_files": True, "gzip_files": True})
 
-    selected_methods = [filter_method, repack_method]
+    auto_relvance_method = MethodDefinition(
+        method_name=AutoRelevanceMethod.name(),
+        method_type=AutoRelevanceMethod,
+        config={"word_list_name":"min_init_seeds"}
+    )
+
+    selected_methods = [auto_relvance_method]
 
     if CONFIG.CONFIRM_RUN:
         print(f"data source: {CONFIG.DATA_SOURCE}")
@@ -85,7 +92,7 @@ def data_process_main():
         print(f"methods: {[m.method_name for m in selected_methods]}")
         input("press any key to continue")
 
-    methods = create_methods(settings,selected_methods )
+    methods = create_methods(settings, selected_methods)
 
     # main process going through the dump folder
 
@@ -103,10 +110,9 @@ def data_process_main():
     if main_status:
         main_status.store_status()
 
+
 def main() -> None:
     data_process_main()
-
-
 
     pass
     # checking label-studio project
@@ -117,7 +123,6 @@ def main() -> None:
     #                                                                              CONFIG.LABELSTUDIO_LABEL_CONFIG_FILENAME)
     #
     # main_status.print_database_status(month_status)
-
 
 
 if __name__ == '__main__':

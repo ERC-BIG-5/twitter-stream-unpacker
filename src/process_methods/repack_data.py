@@ -7,7 +7,7 @@ from typing import Any
 from jsonlines import jsonlines
 from pydantic import BaseModel, ConfigDict
 
-from src.consts import locationindex_type, BASE_REPACK_PATH, get_logger, DATA_SOURCE_DUMP
+from src.consts import locationindex_type, BASE_REPACK_PATH, get_logger, DATA_SOURCE_DUMP, METHOD_REPACK
 from src.models import IterationSettings, ProcessSkipType
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
@@ -52,7 +52,7 @@ class PackEntries(IterationMethod):
 
     @staticmethod
     def name() -> str:
-        return "repack"
+        return METHOD_REPACK
 
     def zip_file(self, fp: Path):
         dest_fp = fp.parent / f"{fp.name}.gz"

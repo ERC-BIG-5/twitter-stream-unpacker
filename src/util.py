@@ -13,6 +13,7 @@ from deprecated import deprecated
 from jsonlines import jsonlines
 
 from src.consts import logger, CONFIG
+from src.models import IterationSettings, SingleLanguageSettings
 
 
 def get_base_dump_path(year: int, month: int) -> Path:
@@ -108,6 +109,8 @@ def post_date(ts: int | str) -> datetime:
 def year_month_str(year: int, month: int) -> str:
     return f"{year:04d}-{month:02d}"
 
+def year_month_lang_str(settings: SingleLanguageSettings):
+    return f"{settings.year:04d}-{settings.month:02d}-{settings.language}"
 
 def get_post_text(post_data: dict) -> str:
     if post_data["truncated"]:

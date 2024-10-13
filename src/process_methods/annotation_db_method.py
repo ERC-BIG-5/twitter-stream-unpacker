@@ -145,7 +145,7 @@ class AnnotationDBMethod(IterationMethod):
         if isinstance(config, dict):
             self.config = AnnotationDBMethodConfig.model_validate(config)
         else:
-            self.config: AnnotationDBMethodConfig
+            self.config: AnnotationDBMethodConfig = config
 
         self.post_collection = AnnotPostCollection(settings.languages,
                                                    settings.year,
