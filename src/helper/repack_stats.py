@@ -20,6 +20,7 @@ class RepackStats(Base):
     hour: Mapped[int] = mapped_column(Integer)
     minute: Mapped[int] = mapped_column(Integer)
     path: Mapped[str] = mapped_column(String)
+    language: Mapped[str] = mapped_column(String)
     count: Mapped[int] = mapped_column(Integer)
 
 
@@ -40,7 +41,8 @@ def repack_stats_main():
         for gz_file in tqdm(gz_files):
             rel_path = gz_file.relative_to(BASE_REPACK_PATH)
             count = read_gzip_file_and_count_lines(gz_file)
-
+            if count == 0:
+                continue
             dt = datetime.strptime(gz_file.name.split(".")[0], "%Y%m%d%H%M")
             session.add(RepackStats(
                 year=dt.year,
@@ -49,10 +51,13 @@ def repack_stats_main():
                 hour=dt.hour,
                 minute=dt.minute,
                 path=rel_path.as_posix(),
+                language=rel_path.parent.name,
                 count=count,
             ))
             if len(session.new) == batch_size:
                 session.commit()
+
+        session.commit()
 
 
 if __name__ == '__main__':
