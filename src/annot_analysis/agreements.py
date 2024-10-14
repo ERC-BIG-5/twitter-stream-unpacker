@@ -79,13 +79,13 @@ def calc_agreements(ana_ds: dict[str, RowResult]):
 
 
 def split_by_agreements(results: dict[str, RowResult],
-                        result_path:Path,
+                        result_path: Path,
                         entries: list[DBAnnot1PostFLEX]):
     # {id: (col, class)}
-    agreed_rows: dict[int,list[tuple[str,str]]] = {}
+    agreed_rows: dict[int, list[tuple[str, str]]] = {}
 
     # {id: [<col>, {class: [coders]}]}
-    diff_rows:dict[int,list[tuple[str,dict[str,list[str]]]]] = {}
+    diff_rows: dict[int, list[tuple[str, dict[str, list[str]]]]] = {}
 
     all_keys_needed = set()
     for id, row in results.items():
@@ -94,18 +94,17 @@ def split_by_agreements(results: dict[str, RowResult],
                 continue
             if len(list(data.keys())) > 1:
                 transform_data = {k.name: v for k, v in data.items()}
-                diff_rows.setdefault(int(id), []).append((col,transform_data))
+                diff_rows.setdefault(int(id), []).append((col, transform_data))
                 for col_val_needed in transform_data.keys():
                     all_keys_needed.add(f"{col}_{col_val_needed}")
             else:
                 agreed_rows.setdefault(int(id), []).append((col, list(data.keys())[0]))
                 pass
 
-
     diff_result_rows = []
     agree_result_rows = []
     for e in entries:
-        if e.id in  diff_rows:
+        if e.id in diff_rows:
             result_row = {
                 "id": e.id,
                 "date_created": e.date_created,
@@ -137,7 +136,7 @@ def split_by_agreements(results: dict[str, RowResult],
         for row in diff_result_rows:
             writer.writerow(row)
 
-    agreements_fieldnames = ["id","text","text_relevant","text_class","media_relevant"]
+    agreements_fieldnames = ["id", "text", "text_relevant", "text_class", "media_relevant"]
 
     agreements_result_file_path = result_path / "agreements_results.csv"
     with agreements_result_file_path.open("w", encoding="utf-8") as fout:
@@ -148,6 +147,7 @@ def split_by_agreements(results: dict[str, RowResult],
 
     # TODO WRITE AGRREMENTS
     return agreed_rows, diff_rows
+
 
 # def serialize_result(result: dict[str,RowResult]) -> dict[str,dict[str,list[str]]]:
 #     return {
@@ -168,8 +168,8 @@ def main():
     pickle.dump(results, (BASE_DATA_PATH / "annotated/pickled_results/results.pickle").open("wb"))
     print(json.dumps(calc_agreements(results), indent=2))
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     # year, month, lang, extra = 2022, 1, "en", "1"
     # annotation_folder = get_annotation_folder(year, month, lang, extra)
 

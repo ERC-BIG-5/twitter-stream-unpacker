@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from src.consts import MAIN_STATUS_FILE_PATH, CONFIG, BASE_STAT_PATH, logger
 from src.util import year_month_str
 
+
 @dataclass(frozen=True)
 class YearMonth:
     year: int
@@ -18,7 +19,6 @@ class YearMonth:
         return f"{self.year:04d}-{self.month:02d}"
 
 
-
 class MonthDatasetStatus(BaseModel):
     key: YearMonth
     folder_name: str
@@ -26,7 +26,7 @@ class MonthDatasetStatus(BaseModel):
     annotated_db_available: bool = False
     index_db_available: bool = False
     stats_file_available: bool = False
-    label_studio_project_ids: Optional[dict[str,int]] = Field(default_factory=dict)
+    label_studio_project_ids: Optional[dict[str, int]] = Field(default_factory=dict)
 
     @property
     def stats_file_path(self) -> Path:

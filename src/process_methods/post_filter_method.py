@@ -8,14 +8,17 @@ from src.post_filter import is_original_tweet, check_contains_media
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 
+
 class PostFilterConfig(BaseModel):
     filter_sensitive: bool = False
     filter_no_location: bool = False
+
 
 class PostFilterMethod(IterationMethod):
     """
     Filters posts that are in the selected languages and are original
     """
+
     def __init__(self, settings: IterationSettings, config: Union[dict, BaseModel]) -> None:
         super().__init__(settings, config)
         self.config = PostFilterConfig.model_validate(config)
@@ -39,7 +42,7 @@ class PostFilterMethod(IterationMethod):
         #     print("has NO ExtendedTweet but is truncated")
 
         if self.config.filter_sensitive and post_data["possibly_sensitive"]:
-                return ProcessCancel("filter out: sensitive")
+            return ProcessCancel("filter out: sensitive")
         if self.config.filter_no_location and not self.has_location(post_data):
             return ProcessCancel("filter out: location")
         if post_data.get("lang") in CONFIG.LANGUAGES and is_original_tweet(post_data):
@@ -52,4 +55,3 @@ class PostFilterMethod(IterationMethod):
 
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         pass
-

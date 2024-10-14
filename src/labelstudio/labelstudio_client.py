@@ -61,7 +61,7 @@ class LabelStudioManager:
         project_data = self.ls_client.projects.create(title=title,
                                                       label_config=label_config,
                                                       enable_empty_annotation=False,
-                                                      #show_overlap_first=False,
+                                                      # show_overlap_first=False,
                                                       maximum_annotations=20)
 
         # NICE TO HAVE
@@ -109,7 +109,7 @@ class LabelStudioManager:
                 project=project_id
             )
             self.ls_client.import_storage.local.validate(project=project_id, id=resp.id,
-                                                                         path=ls_stuio_relative_path.as_posix())
+                                                         path=ls_stuio_relative_path.as_posix())
             sync = self.ls_client.import_storage.local.sync(resp.id)
             print(sync)
             self.ls_client.import_storage.local.delete(resp.id)

@@ -15,10 +15,12 @@ def annotation_status_main():
         ls_project_ids = ds_status.label_studio_project_ids
         for lang, id in ls_project_ids.items():
             data: ls.Project = lc_mgmt.ls_client.projects.get(id)
-            #print(json.dumps(json.loads(orjson.dumps(data.dict())), indent=2))
+            # print(json.dumps(json.loads(orjson.dumps(data.dict())), indent=2))
             print(data.title, data.num_tasks_with_annotations, data.total_annotations_number)
+
+
 #            lc_mgmt.ls_client.projects.exports
- #           pass
+#           pass
 
 if __name__ == '__main__':
     annotation_status_main()

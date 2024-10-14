@@ -37,6 +37,7 @@ def read_gzip_file(path: Path) -> bytes:
     with gzip.GzipFile(path) as gz_bytes:
         return gz_bytes.read()
 
+
 def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, None]:
     with tarfile.open(tar_file, 'r') as tar:
         try:
@@ -74,6 +75,7 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
                     logger.error(f"Error reading {member.name}: {str(e)}")
                     return None
 
+
 def iter_jsonl_file(fp: Path) -> Generator[dict, None, None]:
     """
     iterate through a jsonl file, and run through dicts
@@ -109,8 +111,10 @@ def post_date(ts: int | str) -> datetime:
 def year_month_str(year: int, month: int) -> str:
     return f"{year:04d}-{month:02d}"
 
+
 def year_month_lang_str(settings: SingleLanguageSettings):
     return f"{settings.year:04d}-{settings.month:02d}-{settings.language}"
+
 
 def get_post_text(post_data: dict) -> str:
     if post_data["truncated"]:
@@ -128,7 +132,8 @@ def load_data(file_path: Path) -> dict:
 
 
 def write_data(data: Union[dict, list], file_path: Path, indent: Optional[int] = 2):
-    json.dump(data, file_path.open("w",encoding="utf-8"), ensure_ascii=False, indent=indent)
+    json.dump(data, file_path.open("w", encoding="utf-8"), ensure_ascii=False, indent=indent)
+
 
 def json_gz_stem(file: str) -> str:
     """

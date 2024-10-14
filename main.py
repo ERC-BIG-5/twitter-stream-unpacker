@@ -1,7 +1,7 @@
 from typing import Optional
 
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, DATA_SOURCE_DUMP, \
-    DATA_SOURCE_REPACK
+    DATA_SOURCE_REPACK, BASE_DATA_PATH
 
 from src.data_iterators.base_data_iterator import base_month_data_iterator
 from src.data_iterators.repacked_data_iterator import repack_iterator
@@ -11,6 +11,7 @@ from src.process_methods.annotation_db_method import AnnotationDBMethod, Annotat
 from src.process_methods.auto_relecanve_check_method import AutoRelevanceMethod
 from src.process_methods.repack_data import PackEntries
 from src.process_methods.post_filter_method import PostFilterMethod
+from src.process_methods.simple_waether_bot_filter import SimpleWeatherBotFilter, WeatherBotFilter
 from src.process_methods.stats_method import StatsCollectionMethod
 from src.status import MainStatus, MonthDatasetStatus
 from src.util import year_month_str
@@ -82,7 +83,16 @@ def data_process_main():
         config={"word_list_name":"min_init_seeds"}
     )
 
-    selected_methods = [auto_relvance_method]
+    simple_weather_bot_filter = MethodDefinition(
+        method_name=SimpleWeatherBotFilter.name(),
+        method_type=SimpleWeatherBotFilter,
+        config= WeatherBotFilter(
+            bot_vectors_file=BASE_DATA_PATH  / "temp/bot_detection/bot_embeddings.json",
+            human_vectors_file=BASE_DATA_PATH  / "temp/bot_detection/human_embeddings.json"
+        )
+    )
+
+    selected_methods = [simple_weather_bot_filter]
 
     if CONFIG.CONFIRM_RUN:
         print(f"data source: {CONFIG.DATA_SOURCE}")

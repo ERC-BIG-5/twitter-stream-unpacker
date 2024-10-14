@@ -19,9 +19,10 @@ def check_contains_media(post: dict) -> Optional[bool]:
             return True
     return None
 
+
 def get_media(post: dict) -> list[str]:
     # TODO analyse how and why we have those 2 keys. how to get the complete content
-    for entities_dict_name in [ "extended_entities","entities"]:
+    for entities_dict_name in ["extended_entities", "entities"]:
         ent_dict = post.get(entities_dict_name, {})
         if "media" in ent_dict:
             media_urls: list[str] = []

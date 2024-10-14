@@ -28,25 +28,24 @@ def build_schema(objects: Iterable[dict], check_div_every_k: Optional[int] = Non
         #     next_schema = builder.to_schema()
         #     diff = deepdiff.DeepDiff(cur_schema, next_schema)
         #     print(json.dumps(json.loads(diff.to_json()), indent=2))
-            #print(json.dumps(diff.to_dict(), indent=2))
+        # print(json.dumps(diff.to_dict(), indent=2))
     return builder.to_schema()
 
 
 def test_basic():
     # Example usage
     obj1 = {
-        "name":"x",
-        "age":12
+        "name": "x",
+        "age": 12
     }
 
     obj2 = {
-        "name":"x",
-        "style":"cool"
+        "name": "x",
+        "style": "cool"
     }
 
-
-    #schema = build_schema([obj1, obj2], 1)
-    #print(json.dumps(schema, indent=2))
+    # schema = build_schema([obj1, obj2], 1)
+    # print(json.dumps(schema, indent=2))
 
     schema1 = SchemaBuilder()
     schema1.add_object(obj1)
@@ -57,5 +56,5 @@ def test_basic():
 
 
 if __name__ == '__main__':
-    #test_()
+    # test_()
     test_basic()

@@ -13,7 +13,6 @@ class FullPostDBMethod(IterationMethod):
     TODO implement
     """
 
-
     def __init__(self, settings: IterationSettings, config: dict):
         super().__init__(settings, config)
 
@@ -29,6 +28,7 @@ class FullPostDBMethod(IterationMethod):
 
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         pass
+
 
 def create_main_db_entry(post_data: dict, location_index: list[str]) -> DBPost:
     # previous one, that we need differently later

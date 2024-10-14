@@ -15,6 +15,7 @@ from word_generator.settings import CheckerConfig
 
 logger = get_logger(__file__)
 
+
 class AutoRelevanceConfig(BaseModel):
     # we noticed that the first posts for each hour are often automated
     word_list_name: str
@@ -62,7 +63,7 @@ class AutoRelevanceMethod(IterationMethod):
         logger.info("dumping entries")
         settings = SingleLanguageSettings.from_iter_settings(self.settings, self.relevant_sentences[0][0][2])
         dest = AUTO_RELEVANT_COLLECTION / f"{year_month_lang_str(settings)}.jsonl"
-        with dest.open("a",encoding="utf-8") as fout:
+        with dest.open("a", encoding="utf-8") as fout:
             jsonlines.Writer(fout).write_all(self.relevant_sentences)
         self.relevant_sentences.clear()
 

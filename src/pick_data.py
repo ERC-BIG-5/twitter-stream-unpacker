@@ -77,7 +77,6 @@ def grab_posts_from_location(location_index: tuple[str, str, dict[str, list[int]
 
     data: list[dict] = []
 
-
     for jsonl_file_name, jsonl_lines in jsonl_file_names_and_lines.items():
         compressed_data: bytes = extract_member_in_tar_file(tar_file_path, jsonl_file_name)
         compression_type = Path(jsonl_file_name).suffix[1:]

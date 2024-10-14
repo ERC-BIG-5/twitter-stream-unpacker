@@ -6,7 +6,7 @@ from sqlalchemy_utils import database_exists, create_database
 
 def create_pg_db(db_name: str):
     pwd = CONFIG.PG_PASSWORD.get_secret_value()
-    #default_connection_string = f"postgresql+psycopg2://postgres:{pwd}@localhost/postgres"
+    # default_connection_string = f"postgresql+psycopg2://postgres:{pwd}@localhost/postgres"
 
     # Define the connection string for the database we want to create
     new_db_connection_string = f"postgresql+psycopg2://postgres:{pwd}@localhost/{db_name}"
@@ -26,8 +26,10 @@ def create_pg_db(db_name: str):
         result = conn.execute(sqlalchemy.text("SELECT 1"))
         print(f"Connected to '{db_name}' successfully.")
 
+
 def get_engine(username: str, password: str, db_name: str) -> sqlalchemy.Engine:
     return sqlalchemy.create_engine(f"postgresql+psycopg2://{username}:{password}@localhost/{db_name}")
+
 
 def create_user_grant_access(username: str, password: str, database_name: str):
     # SQL commands
@@ -43,7 +45,7 @@ def create_user_grant_access(username: str, password: str, database_name: str):
 
     pwd = CONFIG.PG_PASSWORD.get_secret_value()
     # Execute the SQL commands
-    with get_engine("postgres", pwd,"postgres").connect() as conn:
+    with get_engine("postgres", pwd, "postgres").connect() as conn:
 
         conn.execute(sqlalchemy.text(f"DROP USER IF EXISTS {username}"))
 
@@ -58,4 +60,4 @@ def create_user_grant_access(username: str, password: str, database_name: str):
 
 if __name__ == "__main__":
     create_pg_db("labelstudio")
-    create_user_grant_access("labelstudio_admin","|/Q[mn.73*H6)-Ec","labelstudio")
+    create_user_grant_access("labelstudio_admin", "|/Q[mn.73*H6)-Ec", "labelstudio")

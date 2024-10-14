@@ -92,8 +92,8 @@ class PackEntries(IterationMethod):
             post_minute_of_day / self.config.time_group_resolution) * self.config.time_group_resolution
         group_hour = int(group_day_minute / 60)
         group_minute = group_day_minute % 60
-        group_hour_str = str(int(group_day_minute / 60)).rjust(2,'0')
-        group_minute_str = str(group_day_minute % 60).rjust(2,'0')
+        group_hour_str = str(int(group_day_minute / 60)).rjust(2, '0')
+        group_minute_str = str(group_day_minute % 60).rjust(2, '0')
         bucket_dt = datetime(post_date_.year, post_date_.month, post_date_.day, group_hour, group_minute)
 
         time_str = f"{y_m_d_str}{group_hour_str}{group_minute_str}"
@@ -116,7 +116,7 @@ class PackEntries(IterationMethod):
             self._init_file_out(post_data)
             logger.debug(f"NEW: post:{post_date2(post_data)}, bucket: None")
         else:
-            post_date_ =post_date2(post_data)
+            post_date_ = post_date2(post_data)
             info = self.fouts[lang]
             # todo actually, check with last buckt...
             time_diff = post_date_ - info.bucket_dt

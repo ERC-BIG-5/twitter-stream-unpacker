@@ -44,7 +44,7 @@ class ProcessCancel:
     def __init__(self, reason: Optional[str] = ""):
         self.reason = reason
 
+
 # JSON_FILE: a minute
 # TAR_FILE: a day
 ProcessSkipType = Enum('ProcessSkipType', ['JSON_FILE', 'TAR_FILE', 'DUMP_FOLDER'])
-

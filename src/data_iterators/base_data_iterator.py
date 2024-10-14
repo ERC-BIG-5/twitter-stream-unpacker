@@ -21,6 +21,7 @@ from src.util import get_base_dump_path, iter_tar_files, tarfile_datestr, iter_j
 
 logger = get_logger(__file__, "INFO")
 
+
 def _base_jsonl_line_processor(jsonl_entry: dict,
                                location_index: locationindex_type,
                                methods: list[IterationMethod]) -> Optional[ProcessSkipType]:
@@ -48,14 +49,14 @@ def _base_jsonl_file_iterator(jsonl_file_data: bytes,
         location_index.append(entries_count)
         entries_count += 1
         # language and original tweet filter
-        potential_skip = _base_jsonl_line_processor(jsonl_entry, cast(locationindex_type, location_index.copy()), methods)
+        potential_skip = _base_jsonl_line_processor(jsonl_entry, cast(locationindex_type, location_index.copy()),
+                                                    methods)
         location_index.pop()
         if potential_skip:
             # only
             if not potential_skip.JSON_FILE:
                 return potential_skip
             break
-
 
 
 def _base_tar_file_iterator(tar_file: Path,
@@ -99,7 +100,6 @@ def _base_dump_iterator(dump_path: Path, methods: list[IterationMethod]):
 def base_month_data_iterator(settings: IterationSettings,
                              status: Optional[MonthDatasetStatus],
                              methods: list[IterationMethod]):
-
     dump_path = get_base_dump_path(settings.year, settings.month)
     if not dump_path.exists():
         logger.error(f"dumppath {dump_path} does not exist")
@@ -111,7 +111,3 @@ def base_month_data_iterator(settings: IterationSettings,
         if status:
             method.set_ds_status_field(status)
         method.finalize()
-
-
-
-

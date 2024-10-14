@@ -35,6 +35,7 @@ class StatsCollectionMethod(IterationMethod):
     - tar files
     - a whole dump folder (a month)
     """
+
     def __init__(self, settings: IterationSettings, config: dict):
         super().__init__(settings, config)
         self.stats = CollectionStats(items={})
@@ -43,7 +44,7 @@ class StatsCollectionMethod(IterationMethod):
             logger.info("collecting hashtags")
         # {lang: count[hashtag]}
         self.hashtags: dict[str, Counter[str]] = {
-            lang : Counter() for lang in settings.languages
+            lang: Counter() for lang in settings.languages
         }
 
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
@@ -65,7 +66,6 @@ class StatsCollectionMethod(IterationMethod):
         if self.collect_hashtags:
             self.hashtags[post_data["lang"]].update(get_hashtags(post_data))
 
-
     def finalize(self):
         for tar_file, tar_file_stats in self.stats.items.items():
             for jsonl_file, jsonl_file_stats in tar_file_stats.items.items():
@@ -82,4 +82,4 @@ class StatsCollectionMethod(IterationMethod):
                   indent=2, ensure_ascii=False)
         if self.collect_hashtags:
             json.dump(self.hashtags, hashtags_file_path.open("w", encoding="utf-8"),
-                  indent=2, ensure_ascii=False)
+                      indent=2, ensure_ascii=False)

@@ -18,7 +18,8 @@ class LabelstudioTask:
     post_text: str
     post_url: Optional[str]
     has_media: bool = field(default=False)
-    image: Optional[str]  = None
+    image: Optional[str] = None
+
 
 def dump_labelstudio_tasks(ls_tasks: list[LabelstudioTask], path: Path,
                            single_file: bool = False,

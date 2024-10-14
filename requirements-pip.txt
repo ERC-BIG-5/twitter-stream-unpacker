@@ -1,0 +1,7 @@
+pydantic
+pydantic_settings
+jsonlines
+tqdm
+deprecated
+sqlalchemy
+sqlalchemy_utils

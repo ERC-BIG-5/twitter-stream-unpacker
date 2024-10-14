@@ -45,10 +45,12 @@ logger = getLogger("twitter-stream-unpacker")
 
 DATA_SOURCE_DUMP = "dump"
 DATA_SOURCE_REPACK = "repack"
+
+
 # CONFIG
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
-    
+
     DATA_SOURCE: Literal["dump"] | Literal["repack"]
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
     LANGUAGES: list[str] = ["en"]  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
@@ -57,7 +59,7 @@ class Config(BaseSettings):
     TEST_MODE: bool = False  #
     YEAR: int = 2022
     MONTH: int = 1
-    CONFIRM_RUN:bool = True
+    CONFIRM_RUN: bool = True
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
     # for something else,... setting up a pg db
@@ -75,7 +77,7 @@ class Config(BaseSettings):
     TEST_NUM_JSONL_FILES: int = Field(20)
 
 
-CONFIG = Config() # type: ignore[call-arg]
+CONFIG = Config()  # type: ignore[call-arg]
 
 if not logger.handlers:
     logger.propagate = False
@@ -93,13 +95,15 @@ if not logger.handlers:
     logger.setLevel(CONFIG.LOG_LEVEL)
     file_handler.setLevel(CONFIG.FILE_LOG_LEVEL)
 
-def get_logger(fn:str, level: str= "INFO") -> logging.Logger:
+
+def get_logger(fn: str, level: str = "INFO") -> logging.Logger:
     logger = logging.getLogger("twitter-stream-unpacker." + fn)
     # handler = StreamHandler()
     # handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
     # logger.addHandler(handler)
     logger.setLevel(level)
     return logger
+
 
 # this is for the simple_generic_iter
 
@@ -112,5 +116,5 @@ METHOD_INDEX_DB = "index"
 METHOD_SCHEMA = "schema"
 METHOD_ANNOTATION_DB = "annotation"
 METHOD_MEDIA_FILTER = "media-filter"
-METHOD_REPACK  = "repack"
-METHOD_AUTO_RELEVANCE =  "auto_relevance"
+METHOD_REPACK = "repack"
+METHOD_AUTO_RELEVANCE = "auto_relevance"
