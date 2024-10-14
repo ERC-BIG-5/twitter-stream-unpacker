@@ -53,7 +53,6 @@ def repack_stats_main():
             ))
             if len(session.new) == batch_size:
                 session.commit()
-                return
 
 
 if __name__ == '__main__':
