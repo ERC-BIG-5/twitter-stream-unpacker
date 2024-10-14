@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database
 
-from src.consts import CONFIG, logger, MAIN_DB, ANNOTATION_DB, BASE_DBS_PATH
+from src.consts import logger, ANNOTATION_DB, BASE_DBS_PATH
 from src.db.models import Base, DBAnnot1Post
 from src.models import SingleLanguageSettings
 
