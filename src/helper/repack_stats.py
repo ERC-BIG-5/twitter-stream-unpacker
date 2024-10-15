@@ -103,7 +103,6 @@ def repack_stats_main():
             ))
             if len(session.new) == batch_size:
                 session.commit()
-                break
 
         session.commit()
 
@@ -115,9 +114,7 @@ def repack_stats_main():
         }
 
         for entries in grouped_entries.values():
-            print(entries)
             res = calculate_group_indices([(e.dt, e.count) for e in entries])
-            print(res)
             for e, count_update in zip(entries, res):
                 e.year_group_index, e.month_group_index, e.day_group_index, e.hour_group_index = count_update
                 session.add(e)
