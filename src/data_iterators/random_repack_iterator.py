@@ -59,7 +59,7 @@ class RandomPackedDataIterator(BaseIterator):
                 return None, None  # or handle this case as appropriate
 
             year_offset = random_index - year_entry.year_group_index
-            print(f"Year entry: {year_entry.year}, offset: {year_offset}")
+            # print(f"Year entry: {year_entry.year}, offset: {year_offset}")
 
             # Find the month entry within the year
             month_entry = session.execute(
@@ -76,7 +76,7 @@ class RandomPackedDataIterator(BaseIterator):
                 return year_entry.path, year_offset  # fallback to year entry
 
             month_offset = year_offset - month_entry.month_group_index
-            print(f"Month entry: {month_entry.month}, offset: {month_offset}")
+            # print(f"Month entry: {month_entry.month}, offset: {month_offset}")
 
             # Find the day entry within the month
             day_entry = session.execute(
@@ -94,7 +94,7 @@ class RandomPackedDataIterator(BaseIterator):
                 return month_entry.path, month_offset  # fallback to month entry
 
             day_offset = month_offset - day_entry.day_group_index
-            print(f"Day entry: {day_entry.day}, offset: {day_offset}")
+            # print(f"Day entry: {day_entry.day}, offset: {day_offset}")
 
             # Find the hour entry within the day
             hour_entry = session.execute(
@@ -113,7 +113,7 @@ class RandomPackedDataIterator(BaseIterator):
                 return day_entry.path, day_offset  # fallback to day entry
 
             final_offset = day_offset - hour_entry.hour_group_index
-            print(f"Hour entry: {hour_entry.hour}, offset: {final_offset}")
+            # print(f"Hour entry: {hour_entry.hour}, offset: {final_offset}")
 
             return hour_entry.path, final_offset
 
@@ -121,7 +121,6 @@ class RandomPackedDataIterator(BaseIterator):
         rel_path, index = self.get_file_and_index()
         fp = BASE_REPACK_PATH / rel_path
         # file_data = read_gzip_file(fp)
-        print(rel_path)
         post_data: dict = None
         all_lines = []
         for idx, json_line in enumerate(iter_jsonl_data2(fp)):
@@ -137,7 +136,7 @@ class RandomPackedDataIterator(BaseIterator):
             if isinstance(res, ProcessCancel):
                 return None
 
-        return post_data
+        return rel_path, index, post_data
 
     def __del__(self):
         # Ensure the session is closed when the object is garbage collected

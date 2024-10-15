@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -119,12 +120,12 @@ def data_process_main():
     repack_iter = RandomPackedDataIterator(settings, month_status, methods)
     entries = []
     for a in repack_iter:
-        print(a)
+        # print(a)
         if a:
             entries.append(a)
-            if len(entries) > 12:
+            if len(entries) > 1050:
                 break
-    return
+    json.dump(entries, (BASE_DATA_PATH / "test_dump").open("w", encoding="utf-8"),ensure_ascii=False)
     # if main_status:
     #     main_status.store_status()
 
