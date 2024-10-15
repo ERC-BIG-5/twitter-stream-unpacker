@@ -1,16 +1,14 @@
 from typing import Optional
 
-from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, DATA_SOURCE_DUMP, \
-    DATA_SOURCE_REPACK, BASE_DATA_PATH
-
+from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH
 from src.data_iterators.base_data_iterator import base_month_data_iterator
-from src.data_iterators.repacked_data_iterator import repack_iterator
+from src.data_iterators.random_repack_iterator import RandomPackedDataIterator
 from src.models import MethodDefinition, IterationSettings
 from src.process_methods.abstract_method import IterationMethod, create_methods
 from src.process_methods.annotation_db_method import AnnotationDBMethod, AnnotationDBMethodConfig
 from src.process_methods.auto_relecanve_check_method import AutoRelevanceMethod
+from src.process_methods.post_filter_method import PostFilterMethod, PostFilterConfig
 from src.process_methods.repack_data import PackEntries
-from src.process_methods.post_filter_method import PostFilterMethod
 from src.process_methods.simple_waether_bot_filter import SimpleWeatherBotFilter, WeatherBotFilter
 from src.process_methods.stats_method import StatsCollectionMethod
 from src.status import MainStatus, MonthDatasetStatus
@@ -59,7 +57,7 @@ def data_process_main():
     filter_method = MethodDefinition(
         method_name=PostFilterMethod.name(),
         method_type=PostFilterMethod,
-        config={})
+        config=PostFilterConfig(filter_sensitive=True))
 
     collect_hashtags_method = MethodDefinition(
         method_name=StatsCollectionMethod.name(),
@@ -80,19 +78,19 @@ def data_process_main():
     auto_relvance_method = MethodDefinition(
         method_name=AutoRelevanceMethod.name(),
         method_type=AutoRelevanceMethod,
-        config={"word_list_name":"min_init_seeds"}
+        config={"word_list_name": "min_init_seeds"}
     )
 
     simple_weather_bot_filter = MethodDefinition(
         method_name=SimpleWeatherBotFilter.name(),
         method_type=SimpleWeatherBotFilter,
-        config= WeatherBotFilter(
-            bot_vectors_file=BASE_DATA_PATH  / "temp/bot_detection/bot_embeddings.json",
-            human_vectors_file=BASE_DATA_PATH  / "temp/bot_detection/human_embeddings.json"
+        config=WeatherBotFilter(
+            bot_vectors_file=BASE_DATA_PATH / "temp/bot_detection/bot_embeddings.json",
+            human_vectors_file=BASE_DATA_PATH / "temp/bot_detection/human_embeddings.json"
         )
     )
 
-    selected_methods = [simple_weather_bot_filter]
+    selected_methods = []
 
     if CONFIG.CONFIRM_RUN:
         print(f"data source: {CONFIG.DATA_SOURCE}")
@@ -110,13 +108,15 @@ def data_process_main():
         logger.info("Test-mode on")
 
     # CHECK ITER SOURCE
-    if CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
-        iter_dumps_main(settings, month_status, methods)
-    elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
-        repack_iterator(settings, month_status, methods)
-    else:
-        logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
-
+    # if CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
+    #     iter_dumps_main(settings, month_status, methods)
+    # elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
+    #     repack_iterator(settings, month_status, methods)
+    # else:
+    #     logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
+    repack_iter = RandomPackedDataIterator(settings, month_status, methods)
+    for a in repack_iter:
+        print(a)
     if main_status:
         main_status.store_status()
 

@@ -12,7 +12,7 @@ from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 
 
-class RepackedDataIterator(BaseIterator):
+class RandomPackedDataIterator(BaseIterator):
 
     def __init__(self, settings: IterationSettings,
                  status: Optional[MonthDatasetStatus],
@@ -26,10 +26,24 @@ class RepackedDataIterator(BaseIterator):
 
         engine = create_engine(f'sqlite:///{repack_db}')
         self.session_maker= sessionmaker(engine)
-        with self.session_maker() as session:
-            stmt = select(RepackStats)
-            # stmt.where self.settings.languages
-            # entries_ = session.execute()
 
     def __iter__(self):
-        pass
+        # Create a new session for each iteration
+        self.session = self.session_maker()
+        stmt = select(RepackStats)
+        #stmt.where(RepackStats.language.in_(self.settings.languages))
+        self.query = self.session.execute(stmt).scalars().all()
+        return self
+
+    def __next__(self):
+        if self.query is None:
+            raise StopIteration
+        try:
+            return next(self.query)
+        except StopIteration:
+            self.session.close()
+            self.session = None
+            self.query_iterator = None
+            raise
+
+
