@@ -1,6 +1,8 @@
+from pathlib import Path
 from typing import Optional
 
-from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH
+from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH, \
+    BASE_REPACK_PATH
 from src.data_iterators.base_data_iterator import base_month_data_iterator
 from src.data_iterators.random_repack_iterator import RandomPackedDataIterator
 from src.models import MethodDefinition, IterationSettings
@@ -12,7 +14,7 @@ from src.process_methods.repack_data import PackEntries
 from src.process_methods.simple_waether_bot_filter import SimpleWeatherBotFilter, WeatherBotFilter
 from src.process_methods.stats_method import StatsCollectionMethod
 from src.status import MainStatus, MonthDatasetStatus
-from src.util import year_month_str
+from src.util import year_month_str, read_gzip_file, read_gzip_file_and_count_lines, iter_jsonl_data2
 
 
 def reset() -> None:
@@ -90,7 +92,7 @@ def data_process_main():
         )
     )
 
-    selected_methods = []
+    selected_methods = [filter_method, simple_weather_bot_filter]
 
     if CONFIG.CONFIRM_RUN:
         print(f"data source: {CONFIG.DATA_SOURCE}")
@@ -115,10 +117,16 @@ def data_process_main():
     # else:
     #     logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
     repack_iter = RandomPackedDataIterator(settings, month_status, methods)
+    entries = []
     for a in repack_iter:
         print(a)
-    if main_status:
-        main_status.store_status()
+        if a:
+            entries.append(a)
+            if len(entries) > 12:
+                break
+    return
+    # if main_status:
+    #     main_status.store_status()
 
 
 def main() -> None:
@@ -137,3 +145,9 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
+    # fp = BASE_REPACK_PATH / "2022-02/20220201/en/202202010045.jsonl.gz"
+    # file_data = read_gzip_file(fp)
+    # print(file_data)
+    # print(read_gzip_file_and_count_lines(fp))
+    # for aas in iter_jsonl_data2(fp):
+    #     print(aas)

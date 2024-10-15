@@ -37,9 +37,18 @@ def read_gzip_file(path: Path) -> bytes:
     with gzip.GzipFile(path) as gz_bytes:
         return gz_bytes.read()
 
+def iter_jsonl_data(jsonl_file_data: bytes)-> Generator[dict, None, None]:
+    for jsonl_entry in jsonlines.Reader(io.BytesIO(jsonl_file_data)):
+        return jsonl_entry
+
+def iter_jsonl_data2(path: Path) -> Generator[dict, None, None]:
+    with gzip.open(path, 'rt', encoding='utf-8') as gz_file:
+        for line in gz_file:
+            yield line
+
 def read_gzip_file_and_count_lines(path: Path) -> int:
     with gzip.open(path, 'rt', encoding='utf-8') as gz_file:
-        return sum(1 for line in gz_file)
+        return sum(1 for _ in gz_file)
 
 
 def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, None]:

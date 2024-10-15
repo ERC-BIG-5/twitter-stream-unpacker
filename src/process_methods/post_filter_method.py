@@ -41,7 +41,9 @@ class PostFilterMethod(IterationMethod):
         # if not post_data.get("extended_tweet") and self.is_truncated(post_data):
         #     print("has NO ExtendedTweet but is truncated")
 
-        if self.config.filter_sensitive and post_data["possibly_sensitive"]:
+        if self.config.filter_sensitive and "possibly_sensitive" not in post_data:
+            pass
+        if self.config.filter_sensitive and post_data.get("possibly_sensitive",False):
             return ProcessCancel("filter out: sensitive")
         if self.config.filter_no_location and not self.has_location(post_data):
             return ProcessCancel("filter out: location")

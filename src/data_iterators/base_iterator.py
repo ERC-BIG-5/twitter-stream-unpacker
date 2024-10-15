@@ -26,7 +26,6 @@ class BaseIterator(ABC, Iterable):
         # This method is not strictly necessary if __iter__ returns an iterator
         return next(self.__iter__())
 
+    @abstractmethod
     def __del__(self):
-        # Ensure the session is closed when the object is garbage collected
-        if self.session:
-            self.session.close()
+        pass
