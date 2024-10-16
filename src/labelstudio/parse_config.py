@@ -9,6 +9,7 @@ def parse_label_config_xml(xml_string) -> ResultStruct:
 
     choices = {}
     free_text = []
+    variable_text_fields = []  # New list for text fields with "$" values
 
     for view in root.findall('.//View'):
         choices_element = view.find('./Choices')
@@ -21,12 +22,13 @@ def parse_label_config_xml(xml_string) -> ResultStruct:
         if textarea is not None:
             free_text.append(textarea.get('name'))
 
-    result = {
-        "choices": choices,
-        "free_text": free_text
-    }
+        # New: Find all Text elements with values starting with "$"
+        for text_element in view.findall('.//Text'):
+            value = text_element.get('value')
+            if value and value.startswith('$'):
+                variable_text_fields.append(text_element.get('name'))
 
-    return ResultStruct(choices=choices, free_text=free_text)
+    return ResultStruct(choices=choices, free_text=free_text, inputs=variable_text_fields)
 
 
 if __name__ == '__main__':

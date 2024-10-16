@@ -149,11 +149,6 @@ def split_by_agreements(results: dict[str, RowResult],
     return agreed_rows, diff_rows
 
 
-# def serialize_result(result: dict[str,RowResult]) -> dict[str,dict[str,list[str]]]:
-#     return {
-#         k: v.dict() for k, v in result.items()
-#     }
-
 def main():
     year, month, lang, extra = 2022, 1, "en", "1"
     results = prepare_sqlite_annotations(year, month, lang, extra)

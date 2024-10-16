@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 import sqlalchemy
+from deprecated.classic import deprecated
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -57,7 +58,7 @@ def fix(col, val) -> str:
             return "n"
     return val
 
-
+@deprecated(reason="we dont use sqlite anymore")
 def prepare_sqlite_annotations(year: int, month: int, language: str, annotation_extra: Optional[str] = None) -> dict[
     str, RowResult]:
     dbs: list[Path] = get_analysed_files(year, month, language, annotation_extra)

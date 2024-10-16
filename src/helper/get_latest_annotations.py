@@ -1,7 +1,7 @@
 import json
 
-from src.annot_analysis.label_studio import prepare_label_studio_export
-from src.consts import BASE_LABELSTUDIO_DATA_PATH, BASE_DATA_PATH
+from src.annot_analysis.label_studio import prepare_label_studio_export, results2csv
+from src.consts import BASE_LABELSTUDIO_DATA_PATH, BASE_DATA_PATH, ANNOTATED_BASE_PATH
 from src.labelstudio.labelstudio_client import LabelStudioManager
 from src.labelstudio.parse_config import parse_label_config_xml
 
@@ -26,7 +26,10 @@ def main():
         annotations = json.load((BASE_DATA_PATH / "temp/annotations_JSON_MIN.json").open(encoding="utf-8"))
         #
         results, missing = prepare_label_studio_export(annotations, config_types)
-        print(json.dumps(results, indent=2))
+        # inputs = get_annotation_inputs(annotations)
+        # print(json.dumps(results, indent=2))
+        dest = ANNOTATED_BASE_PATH / "Nature-4Axis/res.csv"
+        print(results2csv(config_types, results,dest))
 
 if __name__ == "__main__":
     main()
