@@ -38,12 +38,14 @@ def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[Month
 
 def init_methods():
     # init/load methods config
-    config_file = BASE_METHODS_CONFIG_PATH / CONFIG.METHODS_CONFIG_FILE
     methods_config: dict[str, dict[str, Any]] = {}
-    if not config_file.exists():
-        print(f"methods config file not found: {config_file.resolve(PROJECT_PATH)}. USING DEFAULTS")
-    else:
-        methods_config = json.load(config_file.open())
+
+    if CONFIG.METHODS_CONFIG_FILE:
+        config_file = BASE_METHODS_CONFIG_PATH / CONFIG.METHODS_CONFIG_FILE
+        if not config_file.exists():
+            print(f"methods config file not found: {config_file.resolve(PROJECT_PATH)}. USING DEFAULTS")
+        else:
+            methods_config = json.load(config_file.open())
 
     all_methods = {}
 
