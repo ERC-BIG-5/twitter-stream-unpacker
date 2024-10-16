@@ -7,7 +7,7 @@ from typing import Literal, Optional
 from pydantic import SecretStr, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
+PROJECT_PATH = Path(".")
 BASE_DATA_PATH = PROJECT_PATH / "data"
 BASE_METHODS_CONFIG_PATH = BASE_DATA_PATH / "method_configs"
 
