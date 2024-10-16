@@ -1,14 +1,11 @@
 import json
-from typing import Optional
+from typing import Optional, Any
 
-from tqdm import tqdm
-
+from bert_sentence_classifier.consts import BASE_PROJECT_PATH
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH, \
-    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK
+    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, BASE_METHODS_CONFIG_PATH
 from src.data_iterators.base_data_iterator import base_month_data_iterator
-from src.data_iterators.random_repack_iterator import RandomPackedDataIterator
 from src.data_iterators.repacked_data_iterator import repack_iterator
-from src.labelstudio.create_tasks.test_annotation import create_nature4axis_tasks
 from src.models import MethodDefinition, IterationSettings
 from src.process_methods.abstract_method import IterationMethod, create_methods
 from src.status import MainStatus, MonthDatasetStatus
@@ -41,56 +38,71 @@ def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[Month
 
 
 def init_methods():
-    from src.process_methods.post_filter_method import PostFilterMethod
-    from src.process_methods.post_filter_method import PostFilterConfig
+    # init/load methods config
+    config_file = BASE_METHODS_CONFIG_PATH / CONFIG.METHODS_CONFIG_FILE
+    methods_config: dict[str, dict[str, Any]] = {}
+    if not config_file.exists():
+        print(f"methods config file not found: {config_file.resolve(BASE_PROJECT_PATH)}. USING DEFAULTS")
+    else:
+        methods_config = json.load(config_file.open())
 
     all_methods = {}
 
+    # Filter method
+
+    from src.process_methods.post_filter_method import PostFilterMethod
     filter_name = PostFilterMethod.name()
+    print(f"filter config defined: {filter_name in methods_config}")
     all_methods[filter_name] = MethodDefinition(
         method_name=filter_name,
         method_type=PostFilterMethod,
-        config=PostFilterConfig(filter_sensitive=True))
+        config=methods_config.get(filter_name, {}))
+
+    # Stats collection method
 
     from src.process_methods.stats_method import StatsCollectionMethod
 
     stats_name = StatsCollectionMethod.name()
+    print(f"stats config defined: {stats_name in methods_config}")
     all_methods[stats_name] = MethodDefinition(
         method_name=stats_name,
         method_type=StatsCollectionMethod,
-        config={"collect_hashtags": True}
+        config=methods_config.get(stats_name, {})
     )
 
+    # Annotation DB ,
+
     from src.process_methods.annotation_db_method import AnnotationDBMethod
-    from src.process_methods.annotation_db_method import AnnotationDBMethodConfig
 
     annotation_db_name = AnnotationDBMethod.name()
+    print(f"Annotation-DS creation config defined: {annotation_db_name in methods_config}")
     all_methods[annotation_db_name] = MethodDefinition(
         method_name=annotation_db_name,
         method_type=AnnotationDBMethod,
-        config=AnnotationDBMethodConfig(skip_minutes=3)
+        config=methods_config.get(annotation_db_name, {})
     )
 
-    from src.process_methods.repack_data import PackEntries
+    # Repack Method
 
-    repacke_name = PackEntries.name()
+    from src.process_methods.repack_data import RepackEntriesMethod
+
+    repacke_name = RepackEntriesMethod.name()
+    print(f"Repack config defined: {repacke_name in methods_config}")
     all_methods[repacke_name] = MethodDefinition(method_name=repacke_name,
-                                                 method_type=PackEntries,
-                                                 config={"delete_jsonl_files": True, "gzip_files": True})
+                                                 method_type=RepackEntriesMethod,
+                                                 config=methods_config.get(repacke_name, {}))
 
     try:
-
         from src.process_methods.auto_relecanve_check_method import AutoRelevanceMethod
 
         autorelevance_name = AutoRelevanceMethod.name()
         all_methods[autorelevance_name] = MethodDefinition(
             method_name=autorelevance_name,
             method_type=AutoRelevanceMethod,
-            config={"word_list_name": "min_init_seeds"}
+            config=methods_config.get(autorelevance_name, {})
         )
     except ImportError:
         print(f"import failed for AutoRelevanceMethod. Method not usable")
-
 
     try:
         from src.process_methods.simple_waether_bot_filter import SimpleWeatherBotFilter

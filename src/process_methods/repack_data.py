@@ -2,7 +2,7 @@ import gzip
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 from jsonlines import jsonlines
 from pydantic import BaseModel, ConfigDict
@@ -32,14 +32,17 @@ class WriteInfo:
     writer: jsonlines.Writer
 
 
-class PackEntries(IterationMethod):
+class RepackEntriesMethod(IterationMethod):
     """
     Filters posts that are in the selected languages and are original
     """
 
-    def __init__(self, settings: IterationSettings, config: dict) -> None:
+    def __init__(self, settings: IterationSettings, config: Union[PackEntriesConfig,dict]) -> None:
         super().__init__(settings, config)
-        self.config = PackEntriesConfig.model_validate(config or {})
+        if isinstance(config, dict):
+            self.config = PackEntriesConfig.model_validate(config or {})
+        else:
+            self.config = config
 
         self.base_path = BASE_REPACK_PATH / year_month_str(settings.year, settings.month)
         self.base_path.mkdir(exist_ok=True)

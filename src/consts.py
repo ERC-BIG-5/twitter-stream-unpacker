@@ -9,6 +9,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_PATH = Path("/home/rsoleyma/projects/twitter-stream-unpacker")
 BASE_DATA_PATH = PROJECT_PATH / "data"
+BASE_METHODS_CONFIG_PATH = BASE_DATA_PATH / "method_configs"
+
 BASE_DBS_PATH = BASE_DATA_PATH / "sqlite_dbs"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
 BASE_REPACK_PATH = BASE_DATA_PATH / "repack"
@@ -28,7 +30,7 @@ ANNOT_EXTRA_TEST_ROUND = "1"
 ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
 ANOOT_EXTRA_TEST_HAS_MEDIA = "1m"
 
-for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_METHODS_CONFIG_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH, AUTO_RELEVANT_COLLECTION]:
     p.mkdir(parents=True, exist_ok=True)
 
@@ -60,6 +62,7 @@ class Config(BaseSettings):
     YEAR: int = 2022
     MONTH: int = 1
     METHODS: list[str] = []
+    METHODS_CONFIG_FILE: Optional[str]
     CONFIRM_RUN: bool = True
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
