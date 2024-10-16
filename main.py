@@ -127,7 +127,7 @@ def init_methods():
         if m not in all_methods:
             print(f"Method '{m}' not defined.")
         else:
-            selected_methods.append(m)
+            selected_methods.append(all_methods[m])
 
     return selected_methods
 
