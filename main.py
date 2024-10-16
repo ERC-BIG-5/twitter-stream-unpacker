@@ -46,7 +46,8 @@ def init_methods():
             print(f"methods config file not found: {config_file.resolve(PROJECT_PATH)}. USING DEFAULTS")
         else:
             methods_config = json.load(config_file.open())
-
+    else:
+        print(f"methods config file not defined. USING DEFAULTS")
     all_methods = {}
 
     # Filter method
@@ -149,6 +150,7 @@ def data_process_main():
     selected_methods = init_methods()
 
     if CONFIG.CONFIRM_RUN:
+        print("-----------------")
         print(f"data source: {CONFIG.DATA_SOURCE}")
         print(f"test mode: {CONFIG.TEST_MODE}")
         print(f"languages: {CONFIG.LANGUAGES}")
