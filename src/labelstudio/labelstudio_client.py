@@ -4,10 +4,12 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+from label_studio_sdk import ExportCreate
 from label_studio_sdk.client import LabelStudio
 from label_studio_sdk.core import ApiError
 
-from src.consts import LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH, CONFIG
+from src.annot_analysis.label_studio import prepare_label_studio_export
+from src.consts import LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH, CONFIG, BASE_DATA_PATH
 from src.db.db import main_db_path2
 from src.labelstudio.create_tasks.test_annotation import create_annotation_label_ds
 from src.models import IterationSettings, SingleLanguageSettings
@@ -126,6 +128,23 @@ class LabelStudioManager:
         else:
             return Path(CONFIG.LABELSTUDIO_TASK_PATH) / f_stem
 
+    def edit_label_studio_project(self, project_id: int):
+        self.ls_client.projects.update(project_id,
+                                       enable_empty_annotation=True,
+                                       # show_overlap_first=False,
+                                       show_annotation_history=False,
+                                       show_skip_button=True,
+                                       show_collab_predictions=False,
+                                       reveal_preannotations_interactively=False,
+                                       maximum_annotations=20)
+
+    def get_project_annotations(self, project_id: int):
+        export_create = self.ls_client.projects.exports.create(project_id, request=ExportCreate())
+        print(json.dumps(self.ls_client.projects.exports.list_formats(project_id),indent=2))
+        return self.ls_client.projects.exports.download(project_id,
+                                                        export_pk=export_create.id,
+                                                        export_type="JSON_MIN")
+
 
 # def delete_test_user() -> None:
 #     ls_client = create_api_client()
@@ -139,7 +158,15 @@ if __name__ == "__main__":
     # main()
     # delete_test_user()
     ls_mgmt = LabelStudioManager()
-    ls_mgmt._delete_all_projects()
+
+    #res = ls_mgmt.get_project_annotations(2)
+    #print(len(res))
+    #print(json.dumps(res[:10], indent=2, ensure_ascii=False))
+    data = json.load((BASE_DATA_PATH / "temp/annotations_JSON_MIN.json").open(encoding="utf-8"))
+    prepare_label_studio_export(data, ["relevant"])
+    # print(ls_mgmt.get_projects_list())
+    # ls_mgmt.edit_label_studio_project(2)
+    # ls_mgmt._delete_all_projects()
     # p = ls_mgmt.create_project("twitter", IterationSettings(2022, 1, {"en"}, CONFIG.ANNOT_EXTRA,
     #                                                         ), CONFIG.LABELSTUDIO_LABEL_CONFIG_FILENAME)
     # print(p.dict())

@@ -52,9 +52,9 @@ class SimpleWeatherBotFilter(IterationMethod):
         closest_embeddings = self.kv.similar_by_vector(embedding, topn=3)
         for e in closest_embeddings:
             if e[0][0] == "h":
-                print("HH", text, post_data["text"], post_data["id"])
+                # print("HH", text, post_data["text"], post_data["id"])
                 return
-        print(text)
+        # print(text)
         return ProcessCancel("likely bot generated")
 
 

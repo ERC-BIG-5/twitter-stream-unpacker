@@ -59,6 +59,7 @@ class Config(BaseSettings):
     TEST_MODE: bool = False  #
     YEAR: int = 2022
     MONTH: int = 1
+    METHODS: list[str] = []
     CONFIRM_RUN: bool = True
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "WARNING"

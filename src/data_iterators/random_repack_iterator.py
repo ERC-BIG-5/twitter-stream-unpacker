@@ -34,91 +34,36 @@ class RandomPackedDataIterator(BaseIterator):
             last_entry = session.execute(
                 select(RepackStats).order_by(RepackStats.id.desc()).limit(1)
             ).scalar_one_or_none()
-            self.max_index = last_entry.year_group_index + last_entry.count
+            self.max_index = last_entry.total_index + last_entry.count
             # print(self.max_index)
 
     def __iter__(self):
         return self
 
-    def get_file_and_index(self) -> tuple[str, int]:
+    def get_file_and_index(self) -> Optional[tuple[str, int, int]]:
         random_index = random.randint(0, self.max_index - 1)
-        print(f"Random index: {random_index}")
-
+        # print(f"Random index: {random_index}")
+        # print(random_index)
         with self.session_maker() as session:
-            # Find the year entry
-            year_entry = session.execute(
+            entry = session.execute(
                 select(RepackStats)
-                .where(RepackStats.language == self.settings.languages[0])
-                .where(RepackStats.year_group_index <= random_index)
-                .where(RepackStats.year_group_index + RepackStats.count > random_index)
-                .order_by(RepackStats.year_group_index.desc())
-                .limit(1)
-            ).scalar_one_or_none()
+                .where(RepackStats.language == list(self.settings.languages)[0])
+                .where(RepackStats.total_index <= random_index)
+                .where(RepackStats.total_index + RepackStats.count > random_index)
+            ).scalar()
 
-            if not year_entry:
-                return None, None  # or handle this case as appropriate
+            if entry:
+                offset = random_index - entry.total_index
+                return entry.path, offset, random_index
 
-            year_offset = random_index - year_entry.year_group_index
-            # print(f"Year entry: {year_entry.year}, offset: {year_offset}")
-
-            # Find the month entry within the year
-            month_entry = session.execute(
-                select(RepackStats)
-                .where(RepackStats.language == self.settings.languages[0])
-                .where(RepackStats.year == year_entry.year)
-                .where(RepackStats.month_group_index <= year_offset)
-                .where(RepackStats.month_group_index + RepackStats.count > year_offset)
-                .order_by(RepackStats.month_group_index.desc())
-                .limit(1)
-            ).scalar_one_or_none()
-
-            if not month_entry:
-                return year_entry.path, year_offset  # fallback to year entry
-
-            month_offset = year_offset - month_entry.month_group_index
-            # print(f"Month entry: {month_entry.month}, offset: {month_offset}")
-
-            # Find the day entry within the month
-            day_entry = session.execute(
-                select(RepackStats)
-                .where(RepackStats.language == self.settings.languages[0])
-                .where(RepackStats.year == year_entry.year)
-                .where(RepackStats.month == month_entry.month)
-                .where(RepackStats.day_group_index <= month_offset)
-                .where(RepackStats.day_group_index + RepackStats.count > month_offset)
-                .order_by(RepackStats.day_group_index.desc())
-                .limit(1)
-            ).scalar_one_or_none()
-
-            if not day_entry:
-                return month_entry.path, month_offset  # fallback to month entry
-
-            day_offset = month_offset - day_entry.day_group_index
-            # print(f"Day entry: {day_entry.day}, offset: {day_offset}")
-
-            # Find the hour entry within the day
-            hour_entry = session.execute(
-                select(RepackStats)
-                .where(RepackStats.language == self.settings.languages[0])
-                .where(RepackStats.year == year_entry.year)
-                .where(RepackStats.month == month_entry.month)
-                .where(RepackStats.day == day_entry.day)
-                .where(RepackStats.hour_group_index <= day_offset)
-                .where(RepackStats.hour_group_index + RepackStats.count > day_offset)
-                .order_by(RepackStats.hour_group_index.desc())
-                .limit(1)
-            ).scalar_one_or_none()
-
-            if not hour_entry:
-                return day_entry.path, day_offset  # fallback to day entry
-
-            final_offset = day_offset - hour_entry.hour_group_index
-            # print(f"Hour entry: {hour_entry.hour}, offset: {final_offset}")
-
-            return hour_entry.path, final_offset
+            return
 
     def __next__(self):
-        rel_path, index = self.get_file_and_index()
+        find = self.get_file_and_index()
+        if not find:
+            print("strange, no entry...")
+            return None
+        rel_path, index,random_index = find
         fp = BASE_REPACK_PATH / rel_path
         # file_data = read_gzip_file(fp)
         post_data: dict = None
@@ -136,7 +81,7 @@ class RandomPackedDataIterator(BaseIterator):
             if isinstance(res, ProcessCancel):
                 return None
 
-        return rel_path, index, post_data
+        return rel_path, index, post_data,random_index
 
     def __del__(self):
         # Ensure the session is closed when the object is garbage collected

@@ -1,21 +1,18 @@
 import json
-from pathlib import Path
 from typing import Optional
 
+from tqdm import tqdm
+
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH, \
-    BASE_REPACK_PATH
+    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK
 from src.data_iterators.base_data_iterator import base_month_data_iterator
 from src.data_iterators.random_repack_iterator import RandomPackedDataIterator
+from src.data_iterators.repacked_data_iterator import repack_iterator
+from src.labelstudio.create_tasks.test_annotation import create_nature4axis_tasks
 from src.models import MethodDefinition, IterationSettings
 from src.process_methods.abstract_method import IterationMethod, create_methods
-from src.process_methods.annotation_db_method import AnnotationDBMethod, AnnotationDBMethodConfig
-from src.process_methods.auto_relecanve_check_method import AutoRelevanceMethod
-from src.process_methods.post_filter_method import PostFilterMethod, PostFilterConfig
-from src.process_methods.repack_data import PackEntries
-from src.process_methods.simple_waether_bot_filter import SimpleWeatherBotFilter, WeatherBotFilter
-from src.process_methods.stats_method import StatsCollectionMethod
 from src.status import MainStatus, MonthDatasetStatus
-from src.util import year_month_str, read_gzip_file, read_gzip_file_and_count_lines, iter_jsonl_data2
+from src.util import year_month_str
 
 
 def reset() -> None:
@@ -43,6 +40,85 @@ def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[Month
     base_month_data_iterator(settings, month_ds_status, methods)
 
 
+def init_methods():
+    from src.process_methods.post_filter_method import PostFilterMethod
+    from src.process_methods.post_filter_method import PostFilterConfig
+
+    all_methods = {}
+
+    filter_name = PostFilterMethod.name()
+    all_methods[filter_name] = MethodDefinition(
+        method_name=filter_name,
+        method_type=PostFilterMethod,
+        config=PostFilterConfig(filter_sensitive=True))
+
+    from src.process_methods.stats_method import StatsCollectionMethod
+
+    stats_name = StatsCollectionMethod.name()
+    all_methods[stats_name] = MethodDefinition(
+        method_name=stats_name,
+        method_type=StatsCollectionMethod,
+        config={"collect_hashtags": True}
+    )
+
+    from src.process_methods.annotation_db_method import AnnotationDBMethod
+    from src.process_methods.annotation_db_method import AnnotationDBMethodConfig
+
+    annotation_db_name = AnnotationDBMethod.name()
+    all_methods[annotation_db_name] = MethodDefinition(
+        method_name=annotation_db_name,
+        method_type=AnnotationDBMethod,
+        config=AnnotationDBMethodConfig(skip_minutes=3)
+    )
+
+    from src.process_methods.repack_data import PackEntries
+
+    repacke_name = PackEntries.name()
+    all_methods[repacke_name] = MethodDefinition(method_name=repacke_name,
+                                                 method_type=PackEntries,
+                                                 config={"delete_jsonl_files": True, "gzip_files": True})
+
+    try:
+
+        from src.process_methods.auto_relecanve_check_method import AutoRelevanceMethod
+
+        autorelevance_name = AutoRelevanceMethod.name()
+        all_methods[autorelevance_name] = MethodDefinition(
+            method_name=autorelevance_name,
+            method_type=AutoRelevanceMethod,
+            config={"word_list_name": "min_init_seeds"}
+        )
+    except ImportError:
+        print(f"import failed for AutoRelevanceMethod. Method not usable")
+
+
+    try:
+        from src.process_methods.simple_waether_bot_filter import SimpleWeatherBotFilter
+        from src.process_methods.simple_waether_bot_filter import WeatherBotFilter
+
+        simple_weather_bot_filter_name = SimpleWeatherBotFilter.name()
+        all_methods[simple_weather_bot_filter_name] = MethodDefinition(
+            method_name=simple_weather_bot_filter_name,
+            method_type=SimpleWeatherBotFilter,
+            config=WeatherBotFilter(
+                bot_vectors_file=BASE_DATA_PATH / "temp/bot_detection/bot_embeddings.json",
+                human_vectors_file=BASE_DATA_PATH / "temp/bot_detection/human_embeddings.json"
+            )
+        )
+    except ImportError:
+        print(f"import failed for SimpleWeatherBotFilter. Method not usable")
+
+    selected_methods = []
+
+    for m in CONFIG.METHODS:
+        if m not in all_methods:
+            print(f"Method '{m}' not defined.")
+        else:
+            selected_methods.append(m)
+
+    return selected_methods
+
+
 def data_process_main():
     if CONFIG.RESET_DATA:
         reset()
@@ -57,43 +133,7 @@ def data_process_main():
     settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)
     month_status = main_status.year_months[ym_s]
 
-    filter_method = MethodDefinition(
-        method_name=PostFilterMethod.name(),
-        method_type=PostFilterMethod,
-        config=PostFilterConfig(filter_sensitive=True))
-
-    collect_hashtags_method = MethodDefinition(
-        method_name=StatsCollectionMethod.name(),
-        method_type=StatsCollectionMethod,
-        config={"collect_hashtags": True}
-    )
-
-    annotation_db_method = MethodDefinition(
-        method_name=AnnotationDBMethod.name(),
-        method_type=AnnotationDBMethod,
-        config=AnnotationDBMethodConfig(skip_minutes=3)
-    )
-
-    repack_method = MethodDefinition(method_name=PackEntries.name(),
-                                     method_type=PackEntries,
-                                     config={"delete_jsonl_files": True, "gzip_files": True})
-
-    auto_relvance_method = MethodDefinition(
-        method_name=AutoRelevanceMethod.name(),
-        method_type=AutoRelevanceMethod,
-        config={"word_list_name": "min_init_seeds"}
-    )
-
-    simple_weather_bot_filter = MethodDefinition(
-        method_name=SimpleWeatherBotFilter.name(),
-        method_type=SimpleWeatherBotFilter,
-        config=WeatherBotFilter(
-            bot_vectors_file=BASE_DATA_PATH / "temp/bot_detection/bot_embeddings.json",
-            human_vectors_file=BASE_DATA_PATH / "temp/bot_detection/human_embeddings.json"
-        )
-    )
-
-    selected_methods = [filter_method, simple_weather_bot_filter]
+    selected_methods = init_methods()
 
     if CONFIG.CONFIRM_RUN:
         print(f"data source: {CONFIG.DATA_SOURCE}")
@@ -111,21 +151,37 @@ def data_process_main():
         logger.info("Test-mode on")
 
     # CHECK ITER SOURCE
-    # if CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
-    #     iter_dumps_main(settings, month_status, methods)
-    # elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
-    #     repack_iterator(settings, month_status, methods)
-    # else:
-    #     logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
-    repack_iter = RandomPackedDataIterator(settings, month_status, methods)
-    entries = []
-    for a in repack_iter:
-        # print(a)
-        if a:
-            entries.append(a)
-            if len(entries) > 1050:
-                break
-    json.dump(entries, (BASE_DATA_PATH / "test_dump").open("w", encoding="utf-8"),ensure_ascii=False)
+    if CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
+        iter_dumps_main(settings, month_status, methods)
+    elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
+        repack_iterator(settings, month_status, methods)
+    else:
+        logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
+
+    # repack_iter = RandomPackedDataIterator(settings, month_status, methods)
+    # entries = []
+    # entry_ids = set()
+    # limit = 1000
+    # for a in tqdm(repack_iter, total=limit):
+    #     if not a:
+    #         continue
+    #     path, index, entry, random_index = a
+    #     # print(path, index, random_index)
+    #     # print(a)
+    #     if a:
+    #         if entry["id"] in entry_ids:
+    #             continue
+    #         # print(len(entries))
+    #         entry_ids.add(entry["id"])
+    #         entries.append(a)
+    #         if len(entries) > limit:
+    #             break
+    #     else:
+    #         print("something strange happened, no entry")
+    # json.dump(entries, (BASE_DATA_PATH / "test_dump").open("w", encoding="utf-8"), ensure_ascii=False)
+    #
+    # create_nature4axis_tasks([e[2] for e in entries], "test_tasks")
+
     # if main_status:
     #     main_status.store_status()
 

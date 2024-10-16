@@ -11,41 +11,40 @@ from src.util import read_gzip_file_and_count_lines
 Base: DeclarativeMeta = declarative_base()
 
 from datetime import datetime
-from typing import List, Tuple
 
 
-def calculate_group_indices(data: List[Tuple[datetime, int]]) -> List[
-    Tuple[int, int, int, int]]:
-    # Sort data by datetime and language
-    sorted_data = sorted(data, key=lambda x: x[0])
-
-    result = []
-    year_counts = {}
-    month_counts = {}
-    day_counts = {}
-    hour_counts = {}
-
-    for dt, count in sorted_data:
-        year = dt.year
-        month = (dt.year, dt.month)
-        day = (dt.year, dt.month, dt.day)
-        hour = (dt.year, dt.month, dt.day, dt.hour)
-
-        # Calculate group indices
-        year_index = year_counts.get(year, 0)
-        month_index = month_counts.get(month, 0)
-        day_index = day_counts.get(day, 0)
-        hour_index = hour_counts.get(hour, 0)
-
-        # Update counts
-        year_counts[year] = year_index + count
-        month_counts[month] = month_index + count
-        day_counts[day] = day_index + count
-        hour_counts[hour] = hour_index + count
-
-        result.append((year_index, month_index, day_index, hour_index))
-
-    return result
+# def calculate_group_indices(data: List[Tuple[datetime, int]]) -> List[
+#     Tuple[int, int, int, int]]:
+#     # Sort data by datetime and language
+#     sorted_data = sorted(data, key=lambda x: x[0])
+#
+#     result = []
+#     year_counts = {}
+#     month_counts = {}
+#     day_counts = {}
+#     hour_counts = {}
+#
+#     for dt, count in sorted_data:
+#         year = dt.year
+#         month = (dt.year, dt.month)
+#         day = (dt.year, dt.month, dt.day)
+#         hour = (dt.year, dt.month, dt.day, dt.hour)
+#
+#         # Calculate group indices
+#         year_index = year_counts.get(year, 0)
+#         month_index = month_counts.get(month, 0)
+#         day_index = day_counts.get(day, 0)
+#         hour_index = hour_counts.get(hour, 0)
+#
+#         # Update counts
+#         year_counts[year] = year_index + count
+#         month_counts[month] = month_index + count
+#         day_counts[day] = day_index + count
+#         hour_counts[hour] = hour_index + count
+#
+#         result.append((year_index, month_index, day_index, hour_index))
+#
+#     return result
 
 
 class RepackStats(Base):
@@ -60,10 +59,7 @@ class RepackStats(Base):
     path: Mapped[str] = mapped_column(String)
     language: Mapped[str] = mapped_column(String)
     count: Mapped[int] = mapped_column(Integer)
-    year_group_index: Mapped[int] = mapped_column(Integer, nullable=True)
-    month_group_index: Mapped[int] = mapped_column(Integer, nullable=True)
-    day_group_index: Mapped[int] = mapped_column(Integer, nullable=True)
-    hour_group_index: Mapped[int] = mapped_column(Integer, nullable=True)
+    total_index: Mapped[int] = mapped_column(Integer, nullable=True)
 
 
 def setup_db() -> sessionmaker:
@@ -80,6 +76,8 @@ def repack_stats_main():
     batch_size = 50
     session_maker = setup_db()
 
+    # RETRY WITH ALL LANGUAGES
+
     with session_maker() as session:
         for gz_file in tqdm(gz_files):
             rel_path = gz_file.relative_to(BASE_REPACK_PATH)
@@ -88,6 +86,8 @@ def repack_stats_main():
                 continue
             dt = datetime.strptime(gz_file.name.split(".")[0], "%Y%m%d%H%M")
             language = rel_path.parent.name
+            if language != "en":
+                continue
             # g = Group(year=dt.year,month=dt.month,day=dt.day,)
             session.add(RepackStats(
                 year=dt.year,
@@ -98,8 +98,7 @@ def repack_stats_main():
                 path=rel_path.as_posix(),
                 language=language,
                 count=count,
-                dt=dt,
-                year_group_index=0
+                dt=dt
             ))
             if len(session.new) == batch_size:
                 session.commit()
@@ -113,12 +112,18 @@ def repack_stats_main():
             lang: list(group) for lang, group in groupby(all_entries, key=lambda x: x.language)
         }
 
+
+        grouped_entries = {
+            "en": grouped_entries["en"]
+        }
         for entries in grouped_entries.values():
-            res = calculate_group_indices([(e.dt, e.count) for e in entries])
-            for e, count_update in zip(entries, res):
-                e.year_group_index, e.month_group_index, e.day_group_index, e.hour_group_index = count_update
+            total_index = 0
+            for e in entries:
+                e.total_index = total_index
+                total_index += e.count
                 session.add(e)
             session.commit()
+
 
 
 if __name__ == '__main__':
