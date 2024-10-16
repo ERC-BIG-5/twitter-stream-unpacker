@@ -1,9 +1,8 @@
 import json
 from typing import Optional, Any
 
-from bert_sentence_classifier.consts import BASE_PROJECT_PATH
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH, \
-    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, BASE_METHODS_CONFIG_PATH
+    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, BASE_METHODS_CONFIG_PATH, PROJECT_PATH
 from src.data_iterators.base_data_iterator import base_month_data_iterator
 from src.data_iterators.repacked_data_iterator import repack_iterator
 from src.models import MethodDefinition, IterationSettings
@@ -42,7 +41,7 @@ def init_methods():
     config_file = BASE_METHODS_CONFIG_PATH / CONFIG.METHODS_CONFIG_FILE
     methods_config: dict[str, dict[str, Any]] = {}
     if not config_file.exists():
-        print(f"methods config file not found: {config_file.resolve(BASE_PROJECT_PATH)}. USING DEFAULTS")
+        print(f"methods config file not found: {config_file.resolve(PROJECT_PATH)}. USING DEFAULTS")
     else:
         methods_config = json.load(config_file.open())
 
