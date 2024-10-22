@@ -1,6 +1,6 @@
 from typing import Optional
 
-from src.consts import CONFIG, logger
+import requests
 
 
 def is_original_tweet(post_data: dict) -> bool:
@@ -13,20 +13,40 @@ def is_original_tweet(post_data: dict) -> bool:
 
 
 def check_contains_media(post: dict) -> Optional[bool]:
-    for entities_dict_name in ["entities", "extended_entities"]:
-        ent_dict = post.get(entities_dict_name, {})
-        if "media" in ent_dict:
-            return True
-    return None
+    for tweet in [post, post.get("extended_tweet", {})]:
+        for entities_dict_name in ["entities", "extended_entities"]:
+            ent_dict = tweet.get(entities_dict_name, {})
+            if "media" in ent_dict:
+                return True
+    return False
 
 
-def get_media(post: dict) -> list[str]:
+def get_media(post: dict) -> set[str]:
     # TODO analyse how and why we have those 2 keys. how to get the complete content
-    for entities_dict_name in ["extended_entities", "entities"]:
-        ent_dict = post.get(entities_dict_name, {})
-        if "media" in ent_dict:
-            media_urls: list[str] = []
-            for item in ent_dict["media"]:
-                media_urls.append(item['media_url_https'])
-            return media_urls
-    return []
+    urls = set()
+    for post_data in [post, post.get("extended_tweet", {})]:
+        for entities_dict_name in ["extended_entities", "entities"]:
+            ent_dict = post_data.get(entities_dict_name, {})
+            if "media" in ent_dict:
+                for item in ent_dict["media"]:
+                    urls.add(item['media_url_https'])
+    return urls
+
+
+def remove_user(post: dict) -> None:
+    del post["user"]
+    if "extendet_tweet" in post and "user" in post["extendet_tweet"]:
+        del post["extendet_tweet"]["user"]
+
+
+def download_media(post: dict) -> list[tuple[str, bytes]]:
+    urls = get_media(post)
+    #print(urls)
+    results = []
+    for url in urls:
+        resp = requests.get(url)
+        if resp.status_code == 200:
+            results.append((url.split(".")[-1], resp.content))
+        else:
+            results.append(None)
+    return results

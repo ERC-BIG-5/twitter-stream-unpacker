@@ -3,7 +3,7 @@ from typing import Optional, Any, Type, Union
 
 from pydantic import BaseModel
 
-from src.consts import locationindex_type, DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, CONFIG
+from src.consts import locationindex_type, DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, CONFIG, DATA_SOURCE_RANDOM_REPACK
 from src.models import IterationSettings, ProcessCancel, MethodDefinition
 from src.status import MonthDatasetStatus, MainStatus
 
@@ -28,7 +28,7 @@ class IterationMethod(ABC):
 
     @staticmethod
     def compatible_with_data_sources() -> list[str]:
-        return [DATA_SOURCE_DUMP, DATA_SOURCE_REPACK]
+        return [DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, DATA_SOURCE_RANDOM_REPACK]
 
     @staticmethod
     @abstractmethod
@@ -60,6 +60,8 @@ def create_methods(settings: IterationSettings, methods: list[MethodDefinition])
     # filter out methods that are not working with this data_source
     compatible_types = list(filter(lambda m: CONFIG.DATA_SOURCE in m.compatible_with_data_sources(),
                                    method_types))
+    if compatible_types != method_types:
+        print("some methods are not compatible with selected data sources")
     _methods = [method_type(settings, m_definition.config or {}) for method_type, m_definition in
                 list(zip(compatible_types, methods))]
     _method_dict = {method.name: method for method in _methods}

@@ -2,8 +2,9 @@ import json
 from typing import Optional, Any
 
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH, \
-    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, BASE_METHODS_CONFIG_PATH, PROJECT_PATH
+    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, BASE_METHODS_CONFIG_PATH, PROJECT_PATH, DATA_SOURCE_RANDOM_REPACK
 from src.data_iterators.base_data_iterator import base_month_data_iterator
+from src.data_iterators.random_repack_iterator import RandomPackedDataIterator
 from src.data_iterators.repacked_data_iterator import repack_iterator
 from src.models import MethodDefinition, IterationSettings
 from src.process_methods.abstract_method import IterationMethod, create_methods
@@ -170,10 +171,13 @@ def data_process_main():
         iter_dumps_main(settings, month_status, methods)
     elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
         repack_iterator(settings, month_status, methods)
+    elif CONFIG.DATA_SOURCE == DATA_SOURCE_RANDOM_REPACK:
+        repack_iter = RandomPackedDataIterator(settings, month_status, methods)
+        repack_iter.run()
     else:
         logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
 
-    # repack_iter = RandomPackedDataIterator(settings, month_status, methods)
+    #
     # entries = []
     # entry_ids = set()
     # limit = 1000

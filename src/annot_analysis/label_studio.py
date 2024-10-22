@@ -118,6 +118,7 @@ def results2csv(result_struct: ResultStruct, results: dict[str, TaskResults], de
     for choice, options in result_struct.choices.items():
         for option in options:
             field_names.append(choice_col_name(choice, option))
+        # todo, might no be included?
         field_names.append(choice_col_name(choice, NO_RESPONSE))
 
     # build rows

@@ -18,28 +18,28 @@ from src.db.models import DBAnnot1PostFLEX
 
 
 def restructure_data(results: list[RowResult], field_name: str, enum_class: Type[Enum]) -> list[list[int]]:
-    all_coders = set()
-    for row in results:
-        for coders in getattr(row, field_name).values():
-            all_coders.update(coders)
+        all_coders = set()
+        for row in results:
+            for coders in getattr(row, field_name).values():
+                all_coders.update(coders)
 
-    n_coders = len(all_coders)
-    categories = list(enum_class)
+        n_coders = len(all_coders)
+        categories = list(enum_class)
 
-    matrix: list[list[int]] = []
-    for row in results:
-        row_data = [0] * len(categories)
-        field_data = getattr(row, field_name)
+        matrix: list[list[int]] = []
+        for row in results:
+            row_data = [0] * len(categories)
+            field_data = getattr(row, field_name)
 
-        for i, category in enumerate(categories):
-            if category in field_data:
-                row_data[i] = len(field_data[category])
+            for i, category in enumerate(categories):
+                if category in field_data:
+                    row_data[i] = len(field_data[category])
 
-        # Add "not_coded" count
-        row_data.append(n_coders - sum(row_data))
-        matrix.append(row_data)
+            # Add "not_coded" count
+            row_data.append(n_coders - sum(row_data))
+            matrix.append(row_data)
 
-    return matrix
+        return matrix
 
 
 def calculate_fleiss_kappa(results: list[RowResult], field_name: str, enum_class: Type[Enum]):

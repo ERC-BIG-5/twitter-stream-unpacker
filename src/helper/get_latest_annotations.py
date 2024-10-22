@@ -19,7 +19,7 @@ def main():
         config_fp = label_configs_base / PROJECT_CONFIGS[project]
         config_types = parse_label_config_xml(config_fp.read_text())
 
-        # ls_mgmt = LabelStudioManager()
+        ls_mgmt = LabelStudioManager()
         # annotations = ls_mgmt.get_project_annotations(project)
         # json.dump(annotations, (BASE_DATA_PATH / "temp/annotations_JSON_MIN.json").open("w",encoding="utf-8"))
         # TODO FOR TESTING

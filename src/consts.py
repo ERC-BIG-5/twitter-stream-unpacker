@@ -16,6 +16,7 @@ BASE_STAT_PATH = BASE_DATA_PATH / "stats"
 BASE_REPACK_PATH = BASE_DATA_PATH / "repack"
 MAIN_STATUS_FILE_PATH = BASE_DATA_PATH / "status.json"
 AUTO_RELEVANT_COLLECTION = BASE_DATA_PATH / "auto-relevant"
+BASE_MEDIA_FOLDER = BASE_DATA_PATH / "media"
 
 ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
 LOGS_BASE_PATH = BASE_DATA_PATH / "logs"
@@ -47,13 +48,13 @@ logger = getLogger("twitter-stream-unpacker")
 
 DATA_SOURCE_DUMP = "dump"
 DATA_SOURCE_REPACK = "repack"
-
+DATA_SOURCE_RANDOM_REPACK = "random_repack"
 
 # CONFIG
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
 
-    DATA_SOURCE: Literal["dump"] | Literal["repack"]
+    DATA_SOURCE: Literal["dump"] | Literal["repack"] | Literal["random_repack"]
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
     LANGUAGES: list[str] = ["en"]  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
     RESET_DATA: bool = False  # for main
@@ -61,6 +62,7 @@ class Config(BaseSettings):
     TEST_MODE: bool = False  #
     YEAR: int = 2022
     MONTH: int = 1
+    COLLECTION_LIMIT: int = -1 # used random_repack
     METHODS: list[str] = []
     METHODS_CONFIG_FILE: Optional[str] = None
     CONFIRM_RUN: bool = True
