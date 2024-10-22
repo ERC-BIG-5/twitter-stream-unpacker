@@ -25,7 +25,7 @@ def get_media(post: dict) -> set[str]:
     # TODO analyse how and why we have those 2 keys. how to get the complete content
     urls = set()
     for post_data in [post, post.get("extended_tweet", {})]:
-        for entities_dict_name in ["extended_entities", "entities"]:
+        for entities_dict_name in ["entities", "extended_entities"]:
             ent_dict = post_data.get(entities_dict_name, {})
             if "media" in ent_dict:
                 for item in ent_dict["media"]:
@@ -41,7 +41,7 @@ def remove_user(post: dict) -> None:
 
 def download_media(post: dict) -> list[tuple[str, bytes]]:
     urls = get_media(post)
-    #print(urls)
+    # print(urls)
     results = []
     for url in urls:
         resp = requests.get(url)
