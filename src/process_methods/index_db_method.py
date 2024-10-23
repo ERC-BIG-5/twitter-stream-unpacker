@@ -1,7 +1,9 @@
-from sqlalchemy.orm import sessionmaker
+from typing import Optional, Union
+
+from pydantic import BaseModel
 
 from src.consts import METHOD_INDEX_DB, locationindex_type
-from src.db.db import init_db, main_db_path
+from src.db.db import init_pg_db
 from src.db.models import DBPostIndexPost
 from src.models import IterationSettings
 from src.process_methods.abstract_method import IterationMethod
@@ -18,19 +20,12 @@ class IndexEntriesDB(IterationMethod):
     def name() -> str:
         return METHOD_INDEX_DB
 
-    def __init__(self, settings: IterationSettings):
-        super().__init__(settings)
+    def __init__(self, settings: IterationSettings, config: Optional[Union[BaseModel, dict]]):
+        super().__init__(settings, config)
 
-        self.index_entries: dict[str, list[DBPostIndexPost]] = {}
-        self.DUMP_THRESH = 500
-        self._language_sessionmakers: dict[str, sessionmaker] = {}
-        for lang in settings.languages:
-            self.index_entries[lang] = []
-            self._language_sessionmakers[lang] = init_db(
-                main_db_path(settings.year,
-                             settings.month,
-                             lang,
-                             settings.annotation_extra))
+        self.DUMP_THRESH = 5000
+
+        self.session = init_pg_db()()
 
     @staticmethod
     def _create_index_entry(post_data: dict, location_index: locationindex_type) -> DBPostIndexPost:
@@ -42,26 +37,22 @@ class IndexEntriesDB(IterationMethod):
             language=post_data["lang"],
             location_index=list(location_index),
         )
-        post.set_date_columns()
         return post
 
     def _process_data(self, post_data: dict, location_index: locationindex_type):
         entry = self._create_index_entry(post_data, location_index)
         lang = entry.language
-        self.index_entries[lang].append(entry)
-
-        if len(self.index_entries[lang]) > self.DUMP_THRESH:
-            with self._language_sessionmakers[lang]() as session:
-                session.add_all(self.index_entries[lang])
-                session.commit()
-                self.index_entries[lang].clear()
+        #self.index_entries[lang].append(entry)
+        self.session.add(entry)
+        if len(self.session.new) > self.DUMP_THRESH:
+            self.session.commit()
 
     def finalize(self):
-        for lang in self._language_sessionmakers:
-            with self._language_sessionmakers[lang]() as session:
-                session.add_all(self.index_entries[lang])
-                session.commit()
-                self.index_entries[lang].clear()
+        self.session.commit()
+        self.session.close()
 
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         status.index_db_available = True
+
+    def print_outputs(self):
+        print(f"dumping post indices to {self.session.bind.url}")

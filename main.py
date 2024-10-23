@@ -1,8 +1,10 @@
 import json
-from typing import Optional, Any
+import sys
+from typing import Optional, Any, cast
 
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH, \
-    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, BASE_METHODS_CONFIG_PATH, PROJECT_PATH, DATA_SOURCE_RANDOM_REPACK
+    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, BASE_METHODS_CONFIG_PATH, PROJECT_PATH, DATA_SOURCE_RANDOM_REPACK, \
+    METHOD_STATS
 from src.data_iterators.base_data_iterator import base_month_data_iterator
 from src.data_iterators.random_repack_iterator import RandomPackedDataIterator
 from src.data_iterators.repacked_data_iterator import repack_iterator
@@ -52,7 +54,6 @@ def init_methods():
     all_methods = {}
 
     # Filter method
-
     from src.process_methods.post_filter_method import PostFilterMethod
     filter_name = PostFilterMethod.name()
     print(f"filter config defined: {filter_name in methods_config}")
@@ -107,6 +108,23 @@ def init_methods():
     except ImportError:
         print(f"import failed for AutoRelevanceMethod. Method not usable")
 
+    # fill Index db
+
+    try:
+        from src.process_methods.index_db_method import IndexEntriesDB
+
+        index_db_name = IndexEntriesDB.name()
+        print(f"Index config defined: {index_db_name in methods_config}")
+        all_methods[index_db_name] = MethodDefinition(method_name=index_db_name,
+                                                     method_type=IndexEntriesDB,
+                                                     config=methods_config.get(index_db_name, {}))
+
+    except ImportError:
+        print(f"import failed for IndexEntriesDB. Method not usable")
+
+
+    # Simple bot filter
+
     try:
         from src.process_methods.simple_waether_bot_filter import SimpleWeatherBotFilter
         from src.process_methods.simple_waether_bot_filter import WeatherBotFilter
@@ -133,6 +151,21 @@ def init_methods():
 
     return selected_methods
 
+def config_validation(methods: list[IterationMethod]):
+    if not CONFIG.LANGUAGES and CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
+        print("You have to specify languages, when selecting dump as source")
+        sys.exit(1)
+    stats_methods = list(filter(lambda m: m.name() == METHOD_STATS, methods))
+    if len(stats_methods) > 1:
+        print("Stats method has been selected twice. Modifying output paths of first filter, adding 'pre-'")
+        from src.process_methods.stats_method import StatsCollectionMethod
+        pre_stats_method = cast(StatsCollectionMethod, stats_methods[0])
+        fp = pre_stats_method.stats_file_path
+        pre_stats_method.stats_file_path = fp.parent / f"pre-{fp.stem}.json"
+        ht_fp = pre_stats_method.hashtags_file_path
+        pre_stats_method.hashtags_file_path = ht_fp.parent / f"pre-{ht_fp.stem}.json"
+
+
 
 def data_process_main():
     if CONFIG.RESET_DATA:
@@ -149,6 +182,9 @@ def data_process_main():
     month_status = main_status.year_months[ym_s]
 
     selected_methods = init_methods()
+    methods = create_methods(settings, selected_methods)
+
+    config_validation(methods)
 
     if CONFIG.CONFIRM_RUN:
         print("-----------------")
@@ -157,9 +193,14 @@ def data_process_main():
         print(f"languages: {CONFIG.LANGUAGES}")
         print(f"year month: {CONFIG.YEAR}-{CONFIG.MONTH}")
         print(f"methods: {[m.method_name for m in selected_methods]}")
+
+        print("--------")
+        for method in methods:
+            print(f"Method outputs: {method.name()}")
+            method.print_outputs()
+            print("---")
         input("press any key to continue")
 
-    methods = create_methods(settings, selected_methods)
 
     # main process going through the dump folder
 
@@ -208,7 +249,6 @@ def data_process_main():
 def main() -> None:
     data_process_main()
 
-    pass
     # checking label-studio project
     # if not month_status.label_studio_project_ids:
     #     ls_client = LabelStudioManager()

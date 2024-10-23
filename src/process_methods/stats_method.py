@@ -3,7 +3,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional, Any
 
-from src.consts import METHOD_STATS, locationindex_type, METHOD_FILTER, BASE_STAT_PATH, logger
+from src.consts import METHOD_STATS, locationindex_type, BASE_STAT_PATH, logger
 from src.models import IterationSettings
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
@@ -47,6 +47,10 @@ class StatsCollectionMethod(IterationMethod):
             lang: Counter() for lang in settings.languages
         }
 
+        # todo this should be derived from the global status file, or pass it there
+        self.stats_file_path = BASE_STAT_PATH / f"{year_month_str(self.settings.year, self.settings.month)}.json"
+        self.hashtags_file_path = BASE_STAT_PATH / f"hashtags_{year_month_str(self.settings.year, self.settings.month)}.json"
+
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         status.stats_file_available = True
 
@@ -74,12 +78,13 @@ class StatsCollectionMethod(IterationMethod):
             self.stats.total_posts += tar_file_stats.total_posts
             self.stats.accepted_posts += tar_file_stats.accepted_posts
 
-        # todo this should be derived from the global status file, or pass it there
-        stats_file_path = BASE_STAT_PATH / f"{year_month_str(self.settings.year, self.settings.month)}.json"
-        hashtags_file_path = BASE_STAT_PATH / f"hashtags_{year_month_str(self.settings.year, self.settings.month)}.json"
-
-        json.dump(self.stats.to_dict(), stats_file_path.open("w", encoding="utf-8"),
+        json.dump(self.stats.to_dict(), self.stats_file_path.open("w", encoding="utf-8"),
                   indent=2, ensure_ascii=False)
         if self.collect_hashtags:
-            json.dump(self.hashtags, hashtags_file_path.open("w", encoding="utf-8"),
+            json.dump(self.hashtags, self.hashtags_file_path.open("w", encoding="utf-8"),
                       indent=2, ensure_ascii=False)
+
+    def print_outputs(self):
+        print(f"stats file: {self.stats_file_path}")
+        if self.collect_hashtags:
+            print(f"hashtag file: {self.hashtags_file_path}")

@@ -1,4 +1,5 @@
 import logging
+import sys
 from datetime import datetime
 from logging import getLogger, StreamHandler, Formatter, FileHandler
 from pathlib import Path
@@ -31,6 +32,14 @@ ANNOT_EXTRA_TEST_ROUND = "1"
 ANNOT_EXTRA_TEST_ROUND_EXPERIMENT = "1x"
 ANOOT_EXTRA_TEST_HAS_MEDIA = "1m"
 
+ENV_FILE_PATH = PROJECT_PATH / ".env"
+
+if not ENV_FILE_PATH.exists():
+    print(".env file exists, which means you are probably starting the script from the wrong directory...")
+    print(Path().absolute().as_posix())
+    print("BYE")
+    sys.exit(1)
+
 for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_METHODS_CONFIG_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH, AUTO_RELEVANT_COLLECTION]:
     p.mkdir(parents=True, exist_ok=True)
@@ -38,7 +47,7 @@ for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_METHODS_CONFIG_PATH, BASE_REPACK_P
 if not GENERATED_PROJECTS_INFO_PATH.exists():
     GENERATED_PROJECTS_INFO_PATH.write_text("[]", encoding="utf-8")
 
-ENV_FILE_PATH = PROJECT_PATH / ".env"
+
 
 MAIN_DB = "MAIN"
 ANNOTATION_DB = "ANNO"
@@ -56,7 +65,7 @@ class Config(BaseSettings):
 
     DATA_SOURCE: Literal["dump"] | Literal["repack"] | Literal["random_repack"]
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
-    LANGUAGES: list[str] = ["en"]  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
+    LANGUAGES: Optional[list[str]] = None  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
     RESET_DATA: bool = False  # for main
     ANNOT_EXTRA: str = ANNOT_EXTRA_TEST_ROUND
     TEST_MODE: bool = False  #
@@ -69,7 +78,12 @@ class Config(BaseSettings):
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
     # for something else,... setting up a pg db
+    PG_USER_NAME: Optional[str] = None
     PG_PASSWORD: Optional[SecretStr] = None
+    PG_HOSTNAME: Optional[str] = None
+    PG_PORT: Optional[int] = None
+    PG_DB_NAME: Optional[str] = None
+
     # LABLESTUDIO
     LS_BASE_URL: Optional[str] = "http://localhost:8080/"
     LABELSTUDIO_ACCESS_TOKEN: Optional[str] = None

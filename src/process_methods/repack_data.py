@@ -136,3 +136,6 @@ class RepackEntriesMethod(IterationMethod):
 
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         pass
+
+    def print_outputs(self):
+        print(f"Many files in {self.base_path}")

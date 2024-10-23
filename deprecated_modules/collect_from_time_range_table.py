@@ -1,16 +1,18 @@
 import calendar
 from datetime import datetime, timedelta
 
+from deprecated.classic import deprecated
 from sqlalchemy import select
 from tqdm import tqdm
 
 from src.consts import logger
-from src.db.db import init_db, main_db_path, annotation_db_path
+from src.db.db import init_db, main_db_path
 from src.db.models import DBPostIndexPost
 from src.pick_data import grab_posts_from_location
 
 
 # uses TimeRangeEvalEntry to collect tweet data
+@deprecated(reason="redo, where to get the data from... annotation_db_path")
 def get_first_tweets_by_hour(year: int, month: int, for_languages: set[str], pick_k: int = 5) -> list[dict]:
     max_days = calendar.monthrange(year, month)[1] + 1
     main_session = init_db(main_db_path(year, month), read_only=True)()

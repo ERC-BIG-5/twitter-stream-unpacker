@@ -47,6 +47,10 @@ class IterationMethod(ABC):
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         pass
 
+    @abstractmethod
+    def print_outputs(self):
+        pass
+
 
 def get_method_type(method_def: MethodDefinition) -> Type[IterationMethod]:
     if method_def.method_type:

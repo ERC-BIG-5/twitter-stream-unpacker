@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from src.consts import METHOD_ANNOTATION_DB, locationindex_type, METHOD_FILTER, METHOD_MEDIA_FILTER, logger
 from src.db.db import init_db, main_db_path
-from src.db.models import DBAnnot1Post
 from src.models import IterationSettings
 from src.post_filter import check_contains_media, get_media
 from src.process_methods.abstract_method import IterationMethod
@@ -103,21 +102,21 @@ class AnnotPostCollection:
                     if not col_entry:
                         print(f"Missing post for: {lang}-day:{day}-hour:{hour}")
 
-    def create_annot1(self, post_data: dict,
-                      location_index: Optional[tuple[str, str, str, int]] = None) -> DBAnnot1Post:
-        db_post = DBAnnot1Post(
-            post_url=post_url(post_data),
-            location_index=[],  # todo, pass with the rest
-            platform_id=post_data['id_str'],
-            date_created=post_date(post_data['timestamp_ms']),
-            language=post_data['lang'],
-            text=get_post_text(post_data),
-            contains_media=check_contains_media(post_data),
-            extra={"media": get_media(post_data)}
-        )
-        db_post.set_date_columns()
-        db_post.location_index = location_index
-        return db_post
+    # def create_annot1(self, post_data: dict,
+    #                   location_index: Optional[tuple[str, str, str, int]] = None) -> DBAnnot1Post:
+    #     db_post = DBAnnot1Post(
+    #         post_url=post_url(post_data),
+    #         location_index=[],  # todo, pass with the rest
+    #         platform_id=post_data['id_str'],
+    #         date_created=post_date(post_data['timestamp_ms']),
+    #         language=post_data['lang'],
+    #         text=get_post_text(post_data),
+    #         contains_media=check_contains_media(post_data),
+    #         extra={"media": get_media(post_data)}
+    #     )
+    #     db_post.set_date_columns()
+    #     db_post.location_index = location_index
+    #     return db_post
 
     def finalize_dbs(self):
         for lang, days in self._col.items():

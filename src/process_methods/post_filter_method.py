@@ -28,7 +28,6 @@ class PostFilterMethod(IterationMethod):
     def name() -> str:
         return METHOD_FILTER
 
-
     def has_location(self, post_data: dict) -> bool:
         return post_data["geo"] is not None or post_data["coordinates"] is not None or post_data["place"] is not None
 
@@ -59,3 +58,6 @@ class PostFilterMethod(IterationMethod):
 
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         pass
+
+    def print_outputs(self):
+        print("no outputs")
