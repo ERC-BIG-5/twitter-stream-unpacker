@@ -14,7 +14,7 @@ from typing import cast, Optional
 import jsonlines
 from tqdm import tqdm
 
-from src.consts import locationindex_type, CONFIG, get_logger
+from src.consts import locationindex_type, CONFIG, get_logger, ENV_SETTINGS
 from src.models import IterationSettings, ProcessCancel, ProcessSkipType
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
@@ -74,7 +74,7 @@ def _base_tar_file_iterator(tar_file: Path,
         if potential_skip:
             return potential_skip
 
-        if CONFIG.TEST_MODE and test_count == CONFIG.TEST_NUM_JSONL_FILES:
+        if ENV_SETTINGS.TEST_MODE and test_count == ENV_SETTINGS.TEST_NUM_JSONL_FILES:
             break
 
 
@@ -84,9 +84,9 @@ def _base_dump_iterator(dump_path: Path, methods: list[IterationMethod]):
     logger.debug(f"dump: {dump_file_date_name}")
     # iter the tar files in the dump
     tar_files = list(iter_tar_files(dump_path))
-    if CONFIG.TEST_MODE:
-        logger.info(f"Test mode only takes {CONFIG.TEST_NUM_TAR_FILES} tar file(s)")
-        tar_files = tar_files[:CONFIG.TEST_NUM_TAR_FILES]
+    if ENV_SETTINGS.TEST_MODE:
+        logger.info(f"Test mode only takes {ENV_SETTINGS.TEST_NUM_TAR_FILES} tar file(s)")
+        tar_files = tar_files[:ENV_SETTINGS.TEST_NUM_TAR_FILES]
     for idx, tar_file in enumerate(tar_files):
         tar_file_date_name = tarfile_datestr(tar_file)
         if CONFIG.DAYS is not None:

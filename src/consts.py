@@ -4,14 +4,13 @@ import sys
 from datetime import datetime
 from logging import getLogger, StreamHandler, Formatter, FileHandler
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 
-from pydantic import SecretStr, Field
+from pydantic import SecretStr, Field, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_PATH = Path(".")
 BASE_DATA_PATH = PROJECT_PATH / "data"
-BASE_METHODS_CONFIG_PATH = BASE_DATA_PATH / "method_configs"
 BASE_RUN_CONFIGS_PATH = BASE_DATA_PATH / "run_configs"
 
 BASE_DBS_PATH = BASE_DATA_PATH / "sqlite_dbs"
@@ -42,7 +41,7 @@ if not ENV_FILE_PATH.exists():
     print("BYE")
     sys.exit(1)
 
-for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_METHODS_CONFIG_PATH, BASE_RUN_CONFIGS_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_RUN_CONFIGS_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH, AUTO_RELEVANT_COLLECTION]:
     p.mkdir(parents=True, exist_ok=True)
 
@@ -61,22 +60,12 @@ DATA_SOURCE_DUMP = "dump"
 DATA_SOURCE_REPACK = "repack"
 DATA_SOURCE_RANDOM_REPACK = "random_repack"
 
-# CONFIG
-class Config(BaseSettings):
+class EnvSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
-    CONF_JSON: Optional[str] = None
-    DATA_SOURCE: Literal["dump"] | Literal["repack"] | Literal["random_repack"]
+    CONF_JSON: str
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
-    LANGUAGES: Optional[list[str]] = None  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
     RESET_DATA: bool = False  # for main
-    ANNOT_EXTRA: str = ANNOT_EXTRA_TEST_ROUND
     TEST_MODE: bool = False  #
-    YEAR: int = 2022
-    MONTH: int = 1
-    DAYS: Optional[list[int]] = None
-    COLLECTION_LIMIT: int = -1 # used random_repack
-    METHODS: list[str] = []
-    METHODS_CONFIG_FILE: Optional[str] = None
     CONFIRM_RUN: bool = True
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
@@ -100,14 +89,27 @@ class Config(BaseSettings):
     TEST_NUM_JSONL_FILES: int = Field(20)
 
 
-CONFIG = Config()  # type: ignore[call-arg]
+# CONFIG
+class Config(BaseModel):
+    DATA_SOURCE: Literal["dump"] | Literal["repack"] | Literal["random_repack"]
+    LANGUAGES: Optional[list[str]] = None  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
+    RESET_DATA: bool = False  # for main
+    ANNOT_EXTRA: str = ANNOT_EXTRA_TEST_ROUND
+    YEAR: int = 2022
+    MONTH: int = 1
+    DAYS: Optional[list[int]] = None
+    COLLECTION_LIMIT: int = -1 # used random_repack
+    METHODS: list[str] = []
+    METHODS_CONFIG: dict[str,dict[str,Any]] = Field(default_factory=dict)
 
-if CONFIG.CONF_JSON:
-    conf_file = BASE_RUN_CONFIGS_PATH / CONFIG.CONF_JSON
-    if conf_file.exists():
-        conf = json.load(conf_file.open(encoding="utf-8"))
-        for k,v in conf.items():
-            setattr(CONFIG, k,v)
+ENV_SETTINGS = EnvSettings()
+
+
+
+conf_file = BASE_RUN_CONFIGS_PATH / ENV_SETTINGS.CONF_JSON
+conf = json.load(conf_file.open(encoding="utf-8"))
+CONFIG = Config.model_validate(conf)
+
 
 if not logger.handlers:
     logger.propagate = False
@@ -122,8 +124,8 @@ if not logger.handlers:
     file_handler.setFormatter(Formatter(f"({start_time_str})-%(levelname)s: %(message)s"))
     logger.addHandler(file_handler)
 
-    logger.setLevel(CONFIG.LOG_LEVEL)
-    file_handler.setLevel(CONFIG.FILE_LOG_LEVEL)
+    logger.setLevel(ENV_SETTINGS.LOG_LEVEL)
+    file_handler.setLevel(ENV_SETTINGS.FILE_LOG_LEVEL)
 
 
 def get_logger(fn: str, level: str = "INFO") -> logging.Logger:

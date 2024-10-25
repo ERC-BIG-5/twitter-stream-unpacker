@@ -1,11 +1,11 @@
 import sqlalchemy
 
-from src.consts import CONFIG
+from src.consts import CONFIG, ENV_SETTINGS
 from sqlalchemy_utils import database_exists, create_database
 
 
 def create_pg_db(db_name: str):
-    pwd = CONFIG.PG_PASSWORD.get_secret_value()
+    pwd = ENV_SETTINGS.PG_PASSWORD.get_secret_value()
     # default_connection_string = f"postgresql+psycopg2://postgres:{pwd}@localhost/postgres"
 
     # Define the connection string for the database we want to create
@@ -43,7 +43,7 @@ def create_user_grant_access(username: str, password: str, database_name: str):
     GRANT CREATE ON SCHEMA public TO {username};
     """
 
-    pwd = CONFIG.PG_PASSWORD.get_secret_value()
+    pwd = ENV_SETTINGS.PG_PASSWORD.get_secret_value()
     # Execute the SQL commands
     with get_engine("postgres", pwd, "postgres").connect() as conn:
 

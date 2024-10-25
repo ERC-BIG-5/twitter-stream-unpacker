@@ -6,7 +6,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from src.consts import MAIN_STATUS_FILE_PATH, CONFIG, BASE_STAT_PATH, logger
+from src.consts import MAIN_STATUS_FILE_PATH, CONFIG, BASE_STAT_PATH, logger, ENV_SETTINGS
 from src.util import year_month_str
 
 
@@ -50,7 +50,7 @@ class MainStatus(BaseModel):
 
     # months
     def sync_months(self):
-        folder_content = CONFIG.STREAM_BASE_FOLDER.glob("*")
+        folder_content = ENV_SETTINGS.STREAM_BASE_FOLDER.glob("*")
         for folder in folder_content:
             if folder.name.startswith("archiveteam-twitter-stream-"):
                 datum_parts = '-'.join(folder.name.split("-")[-2:])

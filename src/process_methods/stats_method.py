@@ -9,7 +9,7 @@ from src.consts import METHOD_STATS, locationindex_type, BASE_STAT_PATH, logger,
 from src.models import IterationSettings
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
-from src.util import year_month_str, get_hashtags
+from src.util import year_month_str, get_hashtags, consider_deletion
 
 
 @dataclass
@@ -54,7 +54,6 @@ class StatsCollectionMethod(IterationMethod):
             lang: Counter() for lang in settings.languages
         }
 
-        # todo this should be derived from the global status file, or pass it there
         self.stats_file_path = BASE_STAT_PATH / f"{year_month_str(self.settings.year, self.settings.month)}.json"
         self.hashtags_file_path = BASE_STAT_PATH / f"hashtags_{year_month_str(self.settings.year, self.settings.month)}.json"
 
@@ -97,5 +96,11 @@ class StatsCollectionMethod(IterationMethod):
             print(f"hashtag file: {self.hashtags_file_path}")
 
 
+    def reset(self):
+        print(f"{self} reset:")
+        consider_deletion(self.stats_file_path)
+        consider_deletion(self.hashtags_file_path)
+
     def __repr__(self):
         return f"Method: {self.name()}"
+

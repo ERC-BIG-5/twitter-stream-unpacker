@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database
 
-from src.consts import logger, BASE_DBS_PATH, CONFIG
+from src.consts import logger, BASE_DBS_PATH, CONFIG, ENV_SETTINGS
 from src.models import SingleLanguageSettings
 
 
@@ -67,11 +67,11 @@ def init_db(db_path: Path, read_only: bool = False,
 
 
 def init_pg_db() -> sessionmaker:
-    user = CONFIG.PG_USER_NAME
-    host = CONFIG.PG_HOSTNAME
-    port = CONFIG.PG_PORT
-    pwd = CONFIG.PG_PASSWORD.get_secret_value()
-    db_name = CONFIG.PG_DB_NAME
+    user = ENV_SETTINGS.PG_USER_NAME
+    host = ENV_SETTINGS.PG_HOSTNAME
+    port = ENV_SETTINGS.PG_PORT
+    pwd = ENV_SETTINGS.PG_PASSWORD.get_secret_value()
+    db_name = ENV_SETTINGS.PG_DB_NAME
 
     connection_str = f"postgresql+psycopg2://{user}:{pwd}@{host}:{port}/{db_name}"
     engine = create_engine(connection_str)

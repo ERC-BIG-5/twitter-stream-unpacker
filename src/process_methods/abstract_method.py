@@ -54,8 +54,12 @@ class IterationMethod(ABC):
     def print_outputs(self):
         pass
 
+    def reset(self):
+        pass
+
     def __repr__(self):
         return f"Method: {self.name()}"
+
 
 def get_method_type(method_def: MethodDefinition) -> Type[IterationMethod]:
     if method_def.method_type:

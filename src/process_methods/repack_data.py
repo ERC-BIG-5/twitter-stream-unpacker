@@ -11,7 +11,7 @@ from src.consts import locationindex_type, BASE_REPACK_PATH, get_logger, DATA_SO
 from src.models import IterationSettings, ProcessSkipType
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
-from src.util import year_month_str, post_date2
+from src.util import year_month_str, post_date2, consider_deletion
 
 logger = get_logger(__file__)
 
@@ -140,6 +140,9 @@ class RepackEntriesMethod(IterationMethod):
 
     def print_outputs(self):
         print(f"Many files in {self.base_path}")
+
+    def reset(self):
+        consider_deletion(self.base_path)
 
     def __repr__(self) -> str:
         return "Method: repack"

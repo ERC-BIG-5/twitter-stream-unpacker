@@ -12,7 +12,7 @@ from typing import TypeVar, Literal, cast
 
 from sqlalchemy.orm import DeclarativeBase
 
-from src.consts import CONFIG
+from src.consts import CONFIG, ENV_SETTINGS
 
 # not sure if this is needed
 T = TypeVar('T', bound=DeclarativeBase)
@@ -41,7 +41,7 @@ def unpack(bytes_data: bytes, compression_type: ZipFormat, name: str):
 def grab_post_from_location(location_index: tuple[str, str, str, int]) -> dict:
     dump_file_date_name, tar_file_date_name, jsonl_file_name, jsonl_line = location_index
 
-    p = CONFIG.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{dump_file_date_name}"
+    p = ENV_SETTINGS.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{dump_file_date_name}"
     if not p.exists():
         raise FileNotFoundError(f"{p} does not exist")
     tar_file_path = p / f"twitter-stream-{tar_file_date_name}.tar"
@@ -68,7 +68,7 @@ def grab_posts_from_location(location_index: tuple[str, str, dict[str, list[int]
     # these 2 parts are just a path and could be joined
     dump_path, tar_file_date_name, jsonl_file_names_and_lines = location_index
 
-    p = CONFIG.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{dump_path}"
+    p = ENV_SETTINGS.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{dump_path}"
     if not p.exists():
         raise FileNotFoundError(f"{p} does not exist")
     tar_file_path = p / f"twitter-stream-{tar_file_date_name}.tar"

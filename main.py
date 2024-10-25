@@ -1,10 +1,11 @@
-import json
 import sys
 from typing import Optional, Any, cast
 
+from deprecated.classic import deprecated
+
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH, \
-    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, BASE_METHODS_CONFIG_PATH, PROJECT_PATH, DATA_SOURCE_RANDOM_REPACK, \
-    METHOD_STATS
+    DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, DATA_SOURCE_RANDOM_REPACK, \
+    METHOD_STATS, ENV_SETTINGS
 from src.data_iterators.base_data_iterator import base_month_data_iterator
 from src.data_iterators.random_repack_iterator import RandomPackedDataIterator
 from src.data_iterators.repacked_data_iterator import repack_iterator
@@ -14,8 +15,10 @@ from src.status import MainStatus, MonthDatasetStatus
 from src.util import year_month_str
 
 
+@deprecated("this has to be implemented. One way would be to go through all methods. And call a method specific reset")
 def reset() -> None:
-    if not CONFIG.TEST_MODE:
+    # todo
+    if not ENV_SETTINGS.TEST_MODE:
         delete_resp = input(f"Are you sure, you want to reset all data?"
                             f"y/ other key\n")
         if not delete_resp == "y":
@@ -43,14 +46,7 @@ def init_methods():
     # init/load methods config
     methods_config: dict[str, dict[str, Any]] = {}
 
-    if CONFIG.METHODS_CONFIG_FILE:
-        config_file = BASE_METHODS_CONFIG_PATH / CONFIG.METHODS_CONFIG_FILE
-        if not config_file.exists():
-            print(f"methods config file not found: {config_file.resolve(PROJECT_PATH)}. USING DEFAULTS")
-        else:
-            methods_config = json.load(config_file.open())
-    else:
-        print(f"methods config file not defined. USING DEFAULTS")
+    methods_config = CONFIG.METHODS_CONFIG
     all_methods = {}
 
     # Filter method
@@ -116,12 +112,11 @@ def init_methods():
         index_db_name = IndexEntriesDB.name()
         print(f"Index config defined: {index_db_name in methods_config}")
         all_methods[index_db_name] = MethodDefinition(method_name=index_db_name,
-                                                     method_type=IndexEntriesDB,
-                                                     config=methods_config.get(index_db_name, {}))
+                                                      method_type=IndexEntriesDB,
+                                                      config=methods_config.get(index_db_name, {}))
 
     except ImportError:
         print(f"import failed for IndexEntriesDB. Method not usable")
-
 
     # Simple bot filter
 
@@ -151,6 +146,7 @@ def init_methods():
 
     return selected_methods
 
+
 def config_validation(methods: list[IterationMethod]):
     if not CONFIG.LANGUAGES and CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
         print("You have to specify languages, when selecting dump as source")
@@ -166,9 +162,8 @@ def config_validation(methods: list[IterationMethod]):
         pre_stats_method.hashtags_file_path = ht_fp.parent / f"pre-{ht_fp.stem}.json"
 
 
-
 def data_process_main():
-    if CONFIG.RESET_DATA:
+    if ENV_SETTINGS.RESET_DATA:
         reset()
     # load status
     main_status = MainStatus.load_status()
@@ -186,28 +181,26 @@ def data_process_main():
 
     config_validation(methods)
 
-    if CONFIG.CONFIRM_RUN:
+    if ENV_SETTINGS.CONFIRM_RUN:
         print("-----------------")
         print(f"data source: {CONFIG.DATA_SOURCE}")
-        print(f"test mode: {CONFIG.TEST_MODE}")
+        print(f"test mode: {ENV_SETTINGS.TEST_MODE}")
         print(f"languages: {CONFIG.LANGUAGES}")
         print(f"year month: {CONFIG.YEAR}-{CONFIG.MONTH}")
         if CONFIG.DAYS:
             print(f"days: {CONFIG.DAYS}")
         print(f"methods: {[m.method_name for m in selected_methods]}")
 
-
         print("--------")
         for method in methods:
-            print(f"Method outputs: {method.name()}")
+            print(f"Method outputs: {method}")
             method.print_outputs()
             print("---")
         input("press any key to continue")
 
-
     # main process going through the dump folder
 
-    if CONFIG.TEST_MODE:
+    if ENV_SETTINGS.TEST_MODE:
         logger.info("Test-mode on")
 
     # CHECK ITER SOURCE

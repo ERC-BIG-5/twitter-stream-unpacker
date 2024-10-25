@@ -2,6 +2,7 @@ import bz2
 import gzip
 import io
 import json
+import shutil
 import tarfile
 import zlib
 from datetime import datetime
@@ -12,12 +13,12 @@ from typing import Generator, Union, Optional
 from deprecated import deprecated
 from jsonlines import jsonlines
 
-from src.consts import logger, CONFIG
-from src.models import IterationSettings, SingleLanguageSettings
+from src.consts import logger, ENV_SETTINGS
+from src.models import SingleLanguageSettings
 
 
 def get_base_dump_path(year: int, month: int) -> Path:
-    return CONFIG.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{year}-{str(month).rjust(2, '0')}"
+    return ENV_SETTINGS.STREAM_BASE_FOLDER / f"archiveteam-twitter-stream-{year}-{str(month).rjust(2, '0')}"
 
 
 def iter_tar_files(path: Path) -> Generator[Path, None, None]:
@@ -101,11 +102,15 @@ def iter_jsonl_file(fp: Path) -> Generator[dict, None, None]:
 
 
 def consider_deletion(path: Path):
-    delete_resp = input(f"Do you want to delete the file"
+    type_str = "file" if path.is_file() else "directory"
+    delete_resp = input(f"Do you want to delete the {type_str}"
                         f"{path}? : y/ other key\n")
     if delete_resp == "y":
         logger.info(f"deleting: {path}")
-        path.unlink()
+        if path.is_file():
+            path.unlink()
+        else:
+            shutil.rmtree(path)
 
 
 def post_url(data: dict) -> str:

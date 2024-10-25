@@ -9,7 +9,8 @@ from label_studio_sdk.client import LabelStudio
 from label_studio_sdk.core import ApiError
 
 from src.annot_analysis.label_studio import prepare_label_studio_export
-from src.consts import LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH, CONFIG, BASE_DATA_PATH
+from src.consts import LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH, CONFIG, BASE_DATA_PATH, \
+    ENV_SETTINGS
 from src.db.db import main_db_path2
 from src.labelstudio.create_tasks.test_annotation import create_annotation_label_ds
 from src.models import IterationSettings, SingleLanguageSettings
@@ -24,8 +25,8 @@ class ProjectInfo:
 class LabelStudioManager:
 
     def __init__(self):
-        self.ls_client = LabelStudio(base_url=CONFIG.LS_BASE_URL,
-                                     api_key=CONFIG.LABELSTUDIO_ACCESS_TOKEN)
+        self.ls_client = LabelStudio(base_url=ENV_SETTINGS.LS_BASE_URL,
+                                     api_key=ENV_SETTINGS.LABELSTUDIO_ACCESS_TOKEN)
 
         self.get_projects_list()
 
@@ -76,7 +77,7 @@ class LabelStudioManager:
         create_annotation_label_ds(settings, labelstudio_task_path)
         # use local_storage feature of labelstudio to import tasks
         self.import_ds_to_labelstudio(labelstudio_task_path, project_data.id)
-        if not CONFIG.KEEP_LABELSTUDIO_TASKS:
+        if not ENV_SETTINGS.KEEP_LABELSTUDIO_TASKS:
             self.delete_labelstudio_tasks(labelstudio_task_path)
         return project_data.id
 
@@ -102,8 +103,8 @@ class LabelStudioManager:
             self.ls_client.projects.delete(project.id)
 
     def import_ds_to_labelstudio(self, ds_task_path: Path, project_id: int):
-        ds_rel_path = ds_task_path.relative_to(CONFIG.LABELSTUDIO_TASK_PATH)
-        ls_stuio_relative_path = CONFIG.LABELSTUDIO_CONFIG_TASK_BASE_PATH / ds_rel_path
+        ds_rel_path = ds_task_path.relative_to(ENV_SETTINGS.LABELSTUDIO_TASK_PATH)
+        ls_stuio_relative_path = ENV_SETTINGS.LABELSTUDIO_CONFIG_TASK_BASE_PATH / ds_rel_path
         try:
             resp = self.ls_client.import_storage.local.create(
                 title="local_import",
@@ -124,9 +125,9 @@ class LabelStudioManager:
                                   single_file: bool = False) -> Path:
         f_stem = main_db_path2(settings).stem
         if single_file:
-            return Path(CONFIG.LABELSTUDIO_TASK_PATH) / f"{f_stem}.json"
+            return Path(ENV_SETTINGS.LABELSTUDIO_TASK_PATH) / f"{f_stem}.json"
         else:
-            return Path(CONFIG.LABELSTUDIO_TASK_PATH) / f_stem
+            return Path(ENV_SETTINGS.LABELSTUDIO_TASK_PATH) / f_stem
 
     def edit_label_studio_project(self, project_id: int):
         self.ls_client.projects.update(project_id,
