@@ -192,7 +192,10 @@ def data_process_main():
         print(f"test mode: {CONFIG.TEST_MODE}")
         print(f"languages: {CONFIG.LANGUAGES}")
         print(f"year month: {CONFIG.YEAR}-{CONFIG.MONTH}")
+        if CONFIG.DAYS:
+            print(f"days: {CONFIG.DAYS}")
         print(f"methods: {[m.method_name for m in selected_methods]}")
+
 
         print("--------")
         for method in methods:

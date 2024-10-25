@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 from datetime import datetime
@@ -11,6 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 PROJECT_PATH = Path(".")
 BASE_DATA_PATH = PROJECT_PATH / "data"
 BASE_METHODS_CONFIG_PATH = BASE_DATA_PATH / "method_configs"
+BASE_RUN_CONFIGS_PATH = BASE_DATA_PATH / "run_configs"
 
 BASE_DBS_PATH = BASE_DATA_PATH / "sqlite_dbs"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
@@ -40,7 +42,7 @@ if not ENV_FILE_PATH.exists():
     print("BYE")
     sys.exit(1)
 
-for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_METHODS_CONFIG_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_METHODS_CONFIG_PATH, BASE_RUN_CONFIGS_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH, AUTO_RELEVANT_COLLECTION]:
     p.mkdir(parents=True, exist_ok=True)
 
@@ -62,7 +64,7 @@ DATA_SOURCE_RANDOM_REPACK = "random_repack"
 # CONFIG
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_file_encoding='utf-8', extra='allow')
-
+    CONF_JSON: Optional[str] = None
     DATA_SOURCE: Literal["dump"] | Literal["repack"] | Literal["random_repack"]
     STREAM_BASE_FOLDER: Path = Path("/home/rsoleyma/big5-torrents")
     LANGUAGES: Optional[list[str]] = None  # ["en", "es", "pt", "it", "de", "fr", "zxx"]
@@ -71,6 +73,7 @@ class Config(BaseSettings):
     TEST_MODE: bool = False  #
     YEAR: int = 2022
     MONTH: int = 1
+    DAYS: Optional[list[int]] = None
     COLLECTION_LIMIT: int = -1 # used random_repack
     METHODS: list[str] = []
     METHODS_CONFIG_FILE: Optional[str] = None
@@ -98,6 +101,13 @@ class Config(BaseSettings):
 
 
 CONFIG = Config()  # type: ignore[call-arg]
+
+if CONFIG.CONF_JSON:
+    conf_file = BASE_RUN_CONFIGS_PATH / CONFIG.CONF_JSON
+    if conf_file.exists():
+        conf = json.load(conf_file.open(encoding="utf-8"))
+        for k,v in conf.items():
+            setattr(CONFIG, k,v)
 
 if not logger.handlers:
     logger.propagate = False
@@ -134,7 +144,6 @@ METHOD_FILTER = "filter"
 METHOD_STATS = "stats"
 METHOD_INDEX_DB = "index"
 METHOD_SCHEMA = "schema"
-METHOD_ANNOTATION_DB = "annotation"
-METHOD_MEDIA_FILTER = "media-filter"
+METHOD_ANNOTATION_DB = "annotation" # depr.
 METHOD_REPACK = "repack"
 METHOD_AUTO_RELEVANCE = "auto_relevance"

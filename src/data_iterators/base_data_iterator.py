@@ -7,6 +7,7 @@ This is the iterator for the raw dump files . not filtered and in the format
 
 """
 import io
+from datetime import datetime
 from pathlib import Path
 from typing import cast, Optional
 
@@ -88,6 +89,10 @@ def _base_dump_iterator(dump_path: Path, methods: list[IterationMethod]):
         tar_files = tar_files[:CONFIG.TEST_NUM_TAR_FILES]
     for idx, tar_file in enumerate(tar_files):
         tar_file_date_name = tarfile_datestr(tar_file)
+        if CONFIG.DAYS is not None:
+            if datetime.strptime(tar_file_date_name, "%Y%m%d").day not in CONFIG.DAYS:
+                logger.debug(f"skipping day: {tar_file_date_name}")
+                continue
         logger.info(f"tar file: {tar_file_date_name} - {idx + 1} / {len(tar_files)}")
         location_index.append(tar_file_date_name)
         # process tar file

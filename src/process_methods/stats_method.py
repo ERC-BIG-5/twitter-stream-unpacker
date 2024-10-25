@@ -1,9 +1,11 @@
 import json
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from typing import Optional, Any, Union
 
-from src.consts import METHOD_STATS, locationindex_type, BASE_STAT_PATH, logger
+from pydantic import BaseModel
+
+from src.consts import METHOD_STATS, locationindex_type, BASE_STAT_PATH, logger, CONFIG
 from src.models import IterationSettings
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
@@ -24,6 +26,9 @@ class CollectionStats:
             del d["items"]
         return d
 
+class StatsMethodConfig(BaseModel):
+    collect_hashtags: Optional[bool] = False
+    only_selected_languages: Optional[bool] = True
 
 class StatsCollectionMethod(IterationMethod):
     """
@@ -36,10 +41,12 @@ class StatsCollectionMethod(IterationMethod):
     - a whole dump folder (a month)
     """
 
-    def __init__(self, settings: IterationSettings, config: dict):
+    def __init__(self, settings: IterationSettings, config: Union[StatsMethodConfig, dict]):
         super().__init__(settings, config)
         self.stats = CollectionStats(items={})
         self.collect_hashtags: bool = self.config.get("collect_hashtags", False)
+        if isinstance(self.config, dict):
+            self.config = StatsMethodConfig.model_validate(config)
         if self.collect_hashtags:
             logger.info("collecting hashtags")
         # {lang: count[hashtag]}
@@ -64,11 +71,11 @@ class StatsCollectionMethod(IterationMethod):
         tar_file_stat = self.stats.items.setdefault(tar_file, CollectionStats(items={}))
         jsonl_stats = tar_file_stat.items.setdefault(jsonl_file, CollectionStats())
 
-        # TODO, FILTERED OUT ARE NOT COUNTED ANYMORE
         jsonl_stats.total_posts += 1
-        jsonl_stats.accepted_posts[post_data["lang"]] += 1
-        if self.collect_hashtags:
-            self.hashtags[post_data["lang"]].update(get_hashtags(post_data))
+        if not self.config.only_selected_languages or post_data["lang"] in CONFIG.LANGUAGES:
+            jsonl_stats.accepted_posts[post_data["lang"]] += 1
+            if self.collect_hashtags:
+                self.hashtags[post_data["lang"]].update(get_hashtags(post_data))
 
     def finalize(self):
         for tar_file, tar_file_stats in self.stats.items.items():
@@ -88,3 +95,7 @@ class StatsCollectionMethod(IterationMethod):
         print(f"stats file: {self.stats_file_path}")
         if self.collect_hashtags:
             print(f"hashtag file: {self.hashtags_file_path}")
+
+
+    def __repr__(self):
+        return f"Method: {self.name()}"

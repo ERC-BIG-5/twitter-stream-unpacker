@@ -2,7 +2,7 @@ import gzip
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 from jsonlines import jsonlines
 from pydantic import BaseModel, ConfigDict
@@ -21,6 +21,7 @@ class PackEntriesConfig(BaseModel):
     delete_jsonl_files: bool = True
     gzip_files: bool = True
     skip_existing_days: bool = True
+    days: Optional[list[str]] = None
 
     model_config = ConfigDict(extra='ignore')
 
@@ -139,3 +140,6 @@ class RepackEntriesMethod(IterationMethod):
 
     def print_outputs(self):
         print(f"Many files in {self.base_path}")
+
+    def __repr__(self) -> str:
+        return "Method: repack"

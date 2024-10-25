@@ -6,13 +6,12 @@ from typing import Any, Optional, Union
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
-from src.consts import METHOD_ANNOTATION_DB, locationindex_type, METHOD_FILTER, METHOD_MEDIA_FILTER, logger
+from src.consts import METHOD_ANNOTATION_DB, locationindex_type, logger
 from src.db.db import init_db, main_db_path
 from src.models import IterationSettings
-from src.post_filter import check_contains_media, get_media
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
-from src.util import post_date, post_url, get_post_text
+from src.util import post_date
 
 
 @dataclass

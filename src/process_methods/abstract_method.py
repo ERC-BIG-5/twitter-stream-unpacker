@@ -4,7 +4,7 @@ from typing import Optional, Any, Type, Union
 from pydantic import BaseModel
 
 from src.consts import locationindex_type, DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, CONFIG, DATA_SOURCE_RANDOM_REPACK
-from src.models import IterationSettings, ProcessCancel, MethodDefinition
+from src.models import IterationSettings, ProcessCancel, MethodDefinition, ProcessSkipType
 from src.status import MonthDatasetStatus, MainStatus
 
 
@@ -23,6 +23,9 @@ class IterationMethod(ABC):
     def process_data(self, post_data: dict, location_index: locationindex_type) -> Optional[ProcessCancel]:
         self.current_result = self._process_data(post_data, location_index)
         if isinstance(self.current_result, ProcessCancel):
+            return self.current_result
+        elif isinstance(self.current_result, ProcessSkipType):
+            #print(f"skip ({self.current_result}) {location_index}")
             return self.current_result
         return None
 
@@ -51,6 +54,8 @@ class IterationMethod(ABC):
     def print_outputs(self):
         pass
 
+    def __repr__(self):
+        return f"Method: {self.name()}"
 
 def get_method_type(method_def: MethodDefinition) -> Type[IterationMethod]:
     if method_def.method_type:
