@@ -5,7 +5,7 @@ from typing import Optional
 from jsonlines import jsonlines
 from tqdm import tqdm
 
-from src.consts import BASE_REPACK_PATH, get_logger, locationindex_type
+from src.consts import BASE_REPACK_PATH, get_logger, locationindex_type, ENV_SETTINGS
 from src.models import IterationSettings, ProcessCancel
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
@@ -53,11 +53,13 @@ class RepackedDataIterator:
         for lang in self.settings.languages:
             lang_path: Path = day_path / lang
             lang_day_files = sorted(lang_path.glob("*"))
-            for file in tqdm(lang_day_files):
+            for idx, file in tqdm(enumerate(lang_day_files)):
                 location_index.extend([lang_path.parent.name, lang])
                 self._repack_file_iterator(read_gzip_file(file), location_index)
                 location_index.pop()
                 location_index.pop()
+                if ENV_SETTINGS.TEST_MODE and (idx + 1) == ENV_SETTINGS.TEST_NUM_JSONL_FILES:
+                    break
 
     def repack_month_iterator(self):
         days_dirs = sorted(self.base_month_path.glob("*"))
@@ -65,6 +67,8 @@ class RepackedDataIterator:
         for idx, days_dir in enumerate(days_dirs):
             print(f"{idx + 1} / {len(days_dirs)}")
             self._repack_day_iterator(days_dir, location_index)
+            if ENV_SETTINGS.TEST_MODE and (idx + 1) == ENV_SETTINGS.TEST_NUM_TAR_FILES:
+                break
 
 
 def repack_iterator(settings: IterationSettings,
@@ -73,7 +77,7 @@ def repack_iterator(settings: IterationSettings,
     d_iterator = RepackedDataIterator(settings, status, methods)
     d_iterator.repack_month_iterator()
 
-    # for method in methods:
-    #     if status:
-    #         method.set_ds_status_field(status)
-    #     method.finalize()
+    for method in methods:
+        # if status:
+        #     method.set_ds_status_field(status)
+        method.finalize()

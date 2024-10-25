@@ -5,7 +5,7 @@ from typing import Optional, Any, Union
 
 from pydantic import BaseModel
 
-from src.consts import METHOD_STATS, locationindex_type, BASE_STAT_PATH, logger, CONFIG
+from src.consts import METHOD_STATS, locationindex_type, BASE_STAT_PATH, logger, CONFIG, ENV_SETTINGS
 from src.models import IterationSettings
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
@@ -26,9 +26,11 @@ class CollectionStats:
             del d["items"]
         return d
 
+
 class StatsMethodConfig(BaseModel):
     collect_hashtags: Optional[bool] = False
     only_selected_languages: Optional[bool] = True
+
 
 class StatsCollectionMethod(IterationMethod):
     """
@@ -56,6 +58,9 @@ class StatsCollectionMethod(IterationMethod):
 
         self.stats_file_path = BASE_STAT_PATH / f"{year_month_str(self.settings.year, self.settings.month)}.json"
         self.hashtags_file_path = BASE_STAT_PATH / f"hashtags_{year_month_str(self.settings.year, self.settings.month)}.json"
+
+        if CONFIG.DATA_SOURCE == "repack":
+            self.add_prefix("repack")
 
     def set_ds_status_field(self, status: MonthDatasetStatus) -> None:
         status.stats_file_available = True
@@ -95,12 +100,16 @@ class StatsCollectionMethod(IterationMethod):
         if self.collect_hashtags:
             print(f"hashtag file: {self.hashtags_file_path}")
 
-
     def reset(self):
         print(f"{self} reset:")
         consider_deletion(self.stats_file_path)
         consider_deletion(self.hashtags_file_path)
 
+    def add_prefix(self, prefix: str):
+        fp = self.stats_file_path
+        self.stats_file_path = fp.parent / f"{prefix}-{fp.stem}.json"
+        ht_fp = self.hashtags_file_path
+        self.hashtags_file_path = ht_fp.parent / f"{prefix}-{ht_fp.stem}.json"
+
     def __repr__(self):
         return f"Method: {self.name()}"
-

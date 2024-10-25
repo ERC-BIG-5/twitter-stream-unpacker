@@ -156,10 +156,8 @@ def config_validation(methods: list[IterationMethod]):
         print("Stats method has been selected twice. Modifying output paths of first filter, adding 'pre-'")
         from src.process_methods.stats_method import StatsCollectionMethod
         pre_stats_method = cast(StatsCollectionMethod, stats_methods[0])
-        fp = pre_stats_method.stats_file_path
-        pre_stats_method.stats_file_path = fp.parent / f"pre-{fp.stem}.json"
-        ht_fp = pre_stats_method.hashtags_file_path
-        pre_stats_method.hashtags_file_path = ht_fp.parent / f"pre-{ht_fp.stem}.json"
+        pre_stats_method.add_prefix("pre")
+
 
 
 def data_process_main():
@@ -184,6 +182,7 @@ def data_process_main():
     if ENV_SETTINGS.CONFIRM_RUN:
         print("-----------------")
         print(f"data source: {CONFIG.DATA_SOURCE}")
+        print(f"config: {ENV_SETTINGS.CONF_JSON}")
         print(f"test mode: {ENV_SETTINGS.TEST_MODE}")
         print(f"languages: {CONFIG.LANGUAGES}")
         print(f"year month: {CONFIG.YEAR}-{CONFIG.MONTH}")
@@ -193,7 +192,7 @@ def data_process_main():
 
         print("--------")
         for method in methods:
-            print(f"Method outputs: {method}")
+            print(f"Outputs: {method}")
             method.print_outputs()
             print("---")
         input("press any key to continue")

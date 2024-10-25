@@ -85,7 +85,7 @@ class EnvSettings(BaseSettings):
     # TODO this for later will be related to annotation_extra (maybe name it experiment)
     LABELSTUDIO_LABEL_CONFIG_FILENAME: str = "annotation_test.xml"
     # TEST MODE
-    TEST_NUM_TAR_FILES: int = Field(1, ge=1)
+    TEST_NUM_TAR_FILES: int = Field(1, ge=1, description="number of days (in repack)")
     TEST_NUM_JSONL_FILES: int = Field(20)
 
 
@@ -103,7 +103,6 @@ class Config(BaseModel):
     METHODS_CONFIG: dict[str,dict[str,Any]] = Field(default_factory=dict)
 
 ENV_SETTINGS = EnvSettings()
-
 
 
 conf_file = BASE_RUN_CONFIGS_PATH / ENV_SETTINGS.CONF_JSON

@@ -144,5 +144,3 @@ class RepackEntriesMethod(IterationMethod):
     def reset(self):
         consider_deletion(self.base_path)
 
-    def __repr__(self) -> str:
-        return "Method: repack"
