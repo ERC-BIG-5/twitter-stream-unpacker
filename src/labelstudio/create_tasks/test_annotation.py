@@ -2,16 +2,12 @@ import json
 import shutil
 from dataclasses import asdict, field
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from bert_sentence_classifier.experiment.sentence_embeddings.create_sentence_embeddings import get_post_text
 from src.consts import logger, BASE_LABELSTUDIO_DATA_PATH
-from src.db.db import init_db, main_db_path2
-from src.models import SingleLanguageSettings
 from src.util import get_hashtags
 
 
@@ -25,8 +21,14 @@ class LabelstudioTask(BaseModel):
 class Nature4AxisTask(BaseModel):
     post_text: str
 
+class TwitterImage(BaseModel):
+    post_text: str
+    image_0: Optional[str] = None
+    image_1: Optional[str] = None
+    image_2: Optional[str] = None
+    image_3: Optional[str] = None
 
-def dump_labelstudio_tasks(ls_tasks: list[BaseModel], path: Path,
+def dump_labelstudio_tasks(ls_tasks: list[Union[BaseModel,dict]], path: Path,
                            single_file: bool = False,
                            rewrite: bool = True):
     if path.exists():
@@ -39,21 +41,25 @@ def dump_labelstudio_tasks(ls_tasks: list[BaseModel], path: Path,
         else:
             print(f"labelstudio tasks already exist: {path}, skipping, set rewrite to delete previous data")
             return
+
+    def to_dict(task: Union[BaseModel,dict]):
+        return task.model_dump() if not isinstance(task, dict) else task
+
     if single_file:
         with open(path, "w", encoding="utf-8") as fout:
-            json.dump([task.model_dump() for task in ls_tasks], fout)
+            json.dump([to_dict(task) for task in ls_tasks], fout)
     else:
         path.mkdir(parents=True, exist_ok=True)
         for idx, task in enumerate(ls_tasks):
-            (path / f"{str(idx)}.json").write_text(json.dumps(asdict(task), ensure_ascii=False), encoding="utf-8")
+            (path / f"{str(idx)}.json").write_text(json.dumps(to_dict(task), ensure_ascii=False), encoding="utf-8")
 
 
 
-TaskInputTpe = "str" | "int" | "float" | "image"
+# TaskInputTpe = "str" | "int" | "float" | "image"
 
 
 class LabelStudioTaskInput(BaseModel):
-    _type: TaskInputTpe = Field(alias="type")  #
+    ls_type: str = Field(alias="type")  #
     id: int = Field(None)
     data: dict = Field(alias="data")
     metadata: dict = Field()

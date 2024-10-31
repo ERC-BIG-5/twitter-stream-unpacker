@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, Any, cast
+from typing import Optional, cast
 
 from deprecated.classic import deprecated
 
@@ -44,7 +44,7 @@ def iter_dumps_main(settings: IterationSettings, month_ds_status: Optional[Month
 
 def init_methods():
     # init/load methods config
-    methods_config: dict[str, dict[str, Any]] = {}
+    # methods_config: dict[str, dict[str, Any]] = {}
 
     methods_config = CONFIG.METHODS_CONFIG
     all_methods = {}
@@ -136,6 +136,19 @@ def init_methods():
     except ImportError:
         print(f"import failed for SimpleWeatherBotFilter. Method not usable")
 
+    # find by ids
+    try:
+        from src.process_methods.find_method import FindMethod
+
+        finder_name = FindMethod.name()
+        all_methods[finder_name] = MethodDefinition(
+            method_name=finder_name,
+            method_type=FindMethod,
+            config=methods_config.get(finder_name, {})
+        )
+    except ImportError:
+        print(f"import failed for FindMethod. Method not usable")
+
     selected_methods = []
 
     for m in CONFIG.METHODS:
@@ -159,7 +172,6 @@ def config_validation(methods: list[IterationMethod]):
         pre_stats_method.add_prefix("pre")
 
 
-
 def data_process_main():
     if ENV_SETTINGS.RESET_DATA:
         reset()
@@ -169,6 +181,7 @@ def data_process_main():
     # check if selected is available
     ym_s = year_month_str(CONFIG.YEAR, CONFIG.MONTH)
     if ym_s not in main_status.year_months:
+        # todo wtf
         print(f"year month: {ym_s} not included")
         return
     settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)

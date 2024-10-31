@@ -37,6 +37,9 @@ def tarfile_datestr(tar_file: Path) -> str:
 
 def read_gzip_file(path: Path) -> bytes:
     with gzip.GzipFile(path) as gz_bytes:
+        if path.suffix != ".gz":
+            logger.warning(f"cannot gzip-open {path}")
+            return b''
         return gz_bytes.read()
 
 def iter_jsonl_data(jsonl_file_data: bytes)-> Generator[dict, None, None]:

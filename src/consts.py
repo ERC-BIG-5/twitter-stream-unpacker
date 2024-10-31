@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_PATH = Path(".")
 BASE_DATA_PATH = PROJECT_PATH / "data"
-BASE_RUN_CONFIGS_PATH = BASE_DATA_PATH / "run_configs"
+BASE_RUN_CONFIGS_PATH = BASE_DATA_PATH / "_0_run_configs"
 
 BASE_DBS_PATH = BASE_DATA_PATH / "sqlite_dbs"
 BASE_STAT_PATH = BASE_DATA_PATH / "stats"
@@ -150,3 +150,4 @@ METHOD_SCHEMA = "schema"
 METHOD_ANNOTATION_DB = "annotation" # depr.
 METHOD_REPACK = "repack"
 METHOD_AUTO_RELEVANCE = "auto_relevance"
+METHOD_FIND = "find" # temp
