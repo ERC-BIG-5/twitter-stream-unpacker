@@ -4,15 +4,15 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+from deprecated.classic import deprecated
 from label_studio_sdk import ExportCreate
 from label_studio_sdk.client import LabelStudio
 from label_studio_sdk.core import ApiError
 
 from src.annot_analysis.label_studio import prepare_label_studio_export
-from src.consts import LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH, CONFIG, BASE_DATA_PATH, \
+from src.consts import LABELSTUDIO_LABEL_CONFIGS_PATH, GENERATED_PROJECTS_INFO_PATH, BASE_DATA_PATH, \
     ENV_SETTINGS
 from src.db.db import main_db_path2
-from src.labelstudio.create_tasks.test_annotation import create_annotation_label_ds
 from src.models import IterationSettings, SingleLanguageSettings
 
 
@@ -49,6 +49,7 @@ class LabelStudioManager:
         month_short_name = datetime.date(year=1, day=1, month=month).strftime("%b").lower()
         return f'{year}_{month_short_name}_{language}_{platform}_{annotation_extra}'
 
+    @deprecated
     def create_project(self,
                        platform: str,
                        settings: SingleLanguageSettings,
@@ -74,7 +75,8 @@ class LabelStudioManager:
 
         # this accesses the database and creates json-files
         labelstudio_task_path = self.get_labelstudio_task_path(settings)
-        create_annotation_label_ds(settings, labelstudio_task_path)
+        # todo this has been delete
+        # create_annotation_label_ds(settings, labelstudio_task_path)
         # use local_storage feature of labelstudio to import tasks
         self.import_ds_to_labelstudio(labelstudio_task_path, project_data.id)
         if not ENV_SETTINGS.KEEP_LABELSTUDIO_TASKS:

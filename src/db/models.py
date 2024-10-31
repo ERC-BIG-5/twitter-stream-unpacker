@@ -10,16 +10,18 @@ Base: DeclarativeMeta = declarative_base()
 class DBPostIndexPost(Base):
     __tablename__ = 'postindex'
     id: Mapped[int] = mapped_column(primary_key=True)
-    platform: Mapped[str] = mapped_column(String(20), nullable=False)
-    post_url_computed: Mapped[str] = mapped_column(String(60), nullable=False,
-                                                   unique=False)  # todo, take proper user as path variable
+    #platform: Mapped[str] = mapped_column(String(20), nullable=False)
+    platform_id: Mapped[str] = mapped_column(String(50), nullable=True, unique=True)
+    # post_url_computed: Mapped[str] = mapped_column(String(60), nullable=False,
+    #                                                unique=False)  # todo, take proper user as path variable
     date_created: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     location_index: Mapped[list] = mapped_column(JSON, nullable=False)
     language: Mapped[str] = mapped_column(String(5), nullable=False)
 
     info: Mapped[dict] = mapped_column(JSON, nullable=False)
 
-
+    def __repr__(self) -> str:
+        return f"{self.platform_id} / {self.location_index}"
 
 class DBPost(Base):
     __tablename__ = 'post'

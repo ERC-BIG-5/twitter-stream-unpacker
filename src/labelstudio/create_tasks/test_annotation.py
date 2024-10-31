@@ -4,14 +4,13 @@ from dataclasses import asdict, field
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from bert_sentence_classifier.experiment.sentence_embeddings.create_sentence_embeddings import get_post_text
 from src.consts import logger, BASE_LABELSTUDIO_DATA_PATH
 from src.db.db import init_db, main_db_path2
-from src.db.models import DBAnnot1Post
 from src.models import SingleLanguageSettings
 from src.util import get_hashtags
 
@@ -49,18 +48,23 @@ def dump_labelstudio_tasks(ls_tasks: list[BaseModel], path: Path,
             (path / f"{str(idx)}.json").write_text(json.dumps(asdict(task), ensure_ascii=False), encoding="utf-8")
 
 
-def create_annotation_label_ds(settings: SingleLanguageSettings,
-                               task_path: Path,
-                               single_file: bool = False) -> None:
-    """
-    specifically for LabelstudioTask
-    """
-    session: Session = init_db(main_db_path2(settings))()
-    posts = session.execute(select(DBAnnot1Post).order_by(DBAnnot1Post.date_created)).scalars().all()
-    label_entries = [
-        LabelstudioTask(p.text, p.post_url, p.contains_media or False) for p in posts
-    ]
-    dump_labelstudio_tasks(label_entries, task_path, single_file)
+
+TaskInputTpe = "str" | "int" | "float" | "image"
+
+
+class LabelStudioTaskInput(BaseModel):
+    _type: TaskInputTpe = Field(alias="type")  #
+    id: int = Field(None)
+    data: dict = Field(alias="data")
+    metadata: dict = Field()
+
+
+class LabelstudioTask(BaseModel):
+    inputs: dict[str, LabelStudioTaskInput]
+
+
+def create_labelstudio_tasks():
+    pass
 
 
 def create_nature4axis_tasks(entries: list[dict], task_file_name: str):

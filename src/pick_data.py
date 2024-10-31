@@ -8,11 +8,12 @@ import io
 import json
 import tarfile
 from pathlib import Path
-from typing import TypeVar, Literal, cast
+from typing import TypeVar, Literal, cast, Sequence
 
 from sqlalchemy.orm import DeclarativeBase
 
 from src.consts import CONFIG, ENV_SETTINGS
+from src.util import get_post_text
 
 # not sure if this is needed
 T = TypeVar('T', bound=DeclarativeBase)
@@ -93,6 +94,24 @@ def grab_posts_from_location(location_index: tuple[str, str, dict[str, list[int]
 
 if __name__ == '__main__':
     # thats a test...
-    data = grab_post_from_location(("2022-01", "20220101", "20220101/20220101000000.json.gz", 36))
+    # data = grab_post_from_location( ['2022-01', '20220101', '20220101/20220101052200.json.gz', 2475])
+
+    # print(data)
+    # data2 = grab_post_from_location(['2022-01', '20220101', '20220101/20220101052200.json.gz', 2772])
+    # print(data2)
+
+    to_grab = [['2022-01', '20220120', '20220120/20220120152500.json.gz', 3011],
+     ['2022-01', '20220120', '20220120/20220120152500.json.gz', 1079],
+     ['2022-01', '20220120', '20220120/20220120152500.json.gz', 4937],
+     ['2022-01', '20220120', '20220120/20220120152600.json.gz', 328],
+     ['2022-01', '20220120', '20220120/20220120152500.json.gz', 3559],
+     ['2022-01', '20220120', '20220120/20220120152600.json.gz', 2151],
+     ['2022-01', '20220120', '20220120/20220120152600.json.gz', 1261]]
+    grabbed = []
+    for g in to_grab:
+        grabbed.append(grab_post_from_location(g))
+    texts = [get_post_text(t) for t in grabbed]
+    for t in texts:
+        print(t)
     # data = grab_posts_from_location(("2022-03", "20220301", {"20220301/20220301233400.json.gz": [3,4,5]}))
-    print(json.dumps(data, indent=2))
+    # print(json.dumps(data, indent=2))

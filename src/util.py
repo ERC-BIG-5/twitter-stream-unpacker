@@ -10,6 +10,7 @@ from pathlib import Path
 from tarfile import ReadError
 from typing import Generator, Union, Optional
 
+import bagit
 from deprecated import deprecated
 from jsonlines import jsonlines
 
@@ -158,3 +159,21 @@ def json_gz_stem(file: str) -> str:
     turns '20220101/20220101000000.json.gz' into '20220101000000'
     """
     return Path(Path(file).stem).stem
+
+def bag_of(path: Path, description: str):
+    """
+    todo implement properly and test.
+    have the bage in data/bags
+    """
+    # bag = bagit.Bag(path.absolute().as_posix())
+    bag = bagit.make_bag(path, checksum=['md5', 'sha256'])
+    #
+    # # update bag info metadata
+    bag.info['description'] = description
+    bag.save()
+
+    #
+
+
+if __name__ == '__main__':
+    bag_of(Path("/home/rsoleyma/projects/twitter-stream-unpacker/data/test/utils/bagit/folder_to_bag"))
