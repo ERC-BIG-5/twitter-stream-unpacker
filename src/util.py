@@ -2,6 +2,7 @@ import bz2
 import gzip
 import io
 import json
+import re
 import shutil
 import tarfile
 import zlib
@@ -137,12 +138,24 @@ def year_month_str(year: int, month: int) -> str:
 def year_month_lang_str(settings: SingleLanguageSettings):
     return f"{settings.year:04d}-{settings.month:02d}-{settings.language}"
 
+def find_url(text: str) -> list[str]:
+    url_pattern = r'https?://[^\s]+'
+    return re.findall(url_pattern, text)
 
 def get_post_text(post_data: dict) -> str:
+
+    # todo, use the function above
+    def remove_url(txt: str) -> tuple[str,Optional[str]]:
+        if txt.split()[-1].startswith("http"):
+            return " ".join(txt.split()[:-1]), txt.split()[-1]
+        return txt, None
+
     if post_data["truncated"]:
-        return post_data["extended_tweet"]["full_text"]
+        print("t")
+        full_text = post_data["extended_tweet"]["full_text"]
+        return remove_url(full_text)[0]
     else:
-        return post_data["text"]
+        return remove_url(post_data["text"])[0]
 
 
 def get_hashtags(post_data: dict) -> list[str]:
