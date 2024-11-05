@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from tqdm import tqdm
 
 from src.consts import BASE_STAT_PATH, BASE_REPACK_PATH, CONFIG, BASE_DATA_PATH
-from src.data_iterators.base_iterator import BaseIterator
+from src.data_iterators.abstract_base_iterator import BaseIterator
 from src.helper.iter_collection_download_media import create_new_media_group
 from src.helper.repack_stats import RepackStats
 from src.models import IterationSettings, ProcessCancel

@@ -89,10 +89,10 @@ def iter_jsonl_files_data(tar_file: Path) -> Generator[tuple[str, bytes], None, 
                         yield member.name, gz_bytes.read()
                 except ReadError as err:
                     logger.error(f"Error reading {member.name}: {str(err)}")
-                    return None
+                    yield member.name, b''
                 except zlib.error as e:
                     logger.error(f"Error reading {member.name}: {str(e)}")
-                    return None
+                    yield member.name, b''
 
 
 def iter_jsonl_file(fp: Path) -> Generator[dict, None, None]:

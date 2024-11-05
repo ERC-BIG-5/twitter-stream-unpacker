@@ -112,17 +112,22 @@ conf = json.load(conf_file.open(encoding="utf-8"))
 CONFIG = Config.model_validate(conf)
 
 
+file_logger = getLogger("twitter-stream-unpacker-fl")
+start_time_str = datetime.now().strftime("%Y%m%d-%H%M")
+_file_handler = FileHandler(LOGS_BASE_PATH / f"fl-{start_time_str}.txt")
+_file_handler.setFormatter(Formatter(f"%(message)s"))
+file_logger.addHandler(_file_handler)
+file_logger.setLevel("INFO")
+
 if not logger.handlers:
     logger.propagate = False
-
     handler = StreamHandler()
-    handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
+    # handler.setFormatter(Formatter("%(levelname)s: %(message)s"))
+    handler.setFormatter(Formatter("%(levelname)s: %(funcName)s %(message)s"))
     logger.addHandler(handler)
 
-    start_time_str = datetime.now().strftime("%Y%m%d-%H%M")
-
     file_handler = FileHandler(LOGS_BASE_PATH / "logs.txt")
-    file_handler.setFormatter(Formatter(f"({start_time_str})-%(levelname)s: %(message)s"))
+    file_handler.setFormatter(Formatter(f"({start_time_str})-%(levelname)s:  %(message)s"))
     logger.addHandler(file_handler)
 
     logger.setLevel(ENV_SETTINGS.LOG_LEVEL)
@@ -136,6 +141,7 @@ def get_logger(fn: str, level: str = "INFO") -> logging.Logger:
     # logger.addHandler(handler)
     logger.setLevel(level)
     return logger
+
 
 
 # this is for the simple_generic_iter

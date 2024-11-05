@@ -1,3 +1,4 @@
+import json
 import sys
 from typing import Optional, cast
 
@@ -5,7 +6,7 @@ from deprecated.classic import deprecated
 
 from src.consts import CONFIG, MAIN_STATUS_FILE_PATH, BASE_DBS_PATH, BASE_STAT_PATH, logger, BASE_DATA_PATH, \
     DATA_SOURCE_DUMP, DATA_SOURCE_REPACK, DATA_SOURCE_RANDOM_REPACK, \
-    METHOD_STATS, ENV_SETTINGS
+    METHOD_STATS, ENV_SETTINGS, file_logger
 from src.data_iterators.base_data_iterator import base_month_data_iterator
 from src.data_iterators.random_repack_iterator import RandomPackedDataIterator
 from src.data_iterators.repacked_data_iterator import repack_iterator
@@ -179,13 +180,14 @@ def data_process_main():
     main_status = MainStatus.load_status()
     main_status.sync_months()
     # check if selected is available
+    logger.info(f"config-json: {ENV_SETTINGS.CONF_JSON}")
     ym_s = year_month_str(CONFIG.YEAR, CONFIG.MONTH)
-    if ym_s not in main_status.year_months:
-        # todo wtf
-        print(f"year month: {ym_s} not included")
-        return
-    settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)
+    # if ym_s not in main_status.year_months:
+    #     # todo wtf
+    #     print(logger.error(f"year month: {ym_s} not included"))
+    #     return
     month_status = main_status.year_months[ym_s]
+    settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)
 
     selected_methods = init_methods()
     methods = create_methods(settings, selected_methods)
@@ -209,6 +211,8 @@ def data_process_main():
             method.print_outputs()
             print("---")
         input("press any key to continue")
+
+    file_logger.info(json.dumps(CONFIG.model_dump()))
 
     # main process going through the dump folder
 

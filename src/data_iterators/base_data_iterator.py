@@ -9,18 +9,29 @@ This is the iterator for the raw dump files . not filtered and in the format
 import io
 from datetime import datetime
 from pathlib import Path
+from time import time
 from typing import cast, Optional
 
 import jsonlines
 from tqdm import tqdm
 
-from src.consts import locationindex_type, CONFIG, get_logger, ENV_SETTINGS
+from src.consts import locationindex_type, CONFIG, get_logger, ENV_SETTINGS, file_logger
+from src.data_iterators.abstract_base_iterator import BaseIterator
 from src.models import IterationSettings, ProcessCancel, ProcessSkipType
 from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 from src.util import get_base_dump_path, iter_tar_files, tarfile_datestr, iter_jsonl_files_data
 
 logger = get_logger(__file__, "INFO")
+
+
+class DataDumpIterator(BaseIterator):
+
+    def __iter__(self):
+        pass
+
+    def __del__(self):
+        pass
 
 
 def _base_jsonl_line_processor(jsonl_entry: dict,
@@ -88,6 +99,7 @@ def _base_dump_iterator(dump_path: Path, methods: list[IterationMethod]):
         logger.info(f"Test mode only takes {ENV_SETTINGS.TEST_NUM_TAR_FILES} tar file(s)")
         tar_files = tar_files[:ENV_SETTINGS.TEST_NUM_TAR_FILES]
     for idx, tar_file in enumerate(tar_files):
+        start_t = time()
         tar_file_date_name = tarfile_datestr(tar_file)
         if CONFIG.DAYS is not None:
             if datetime.strptime(tar_file_date_name, "%Y%m%d").day not in CONFIG.DAYS:
@@ -95,6 +107,7 @@ def _base_dump_iterator(dump_path: Path, methods: list[IterationMethod]):
                 continue
         logger.info(f"tar file: {tar_file_date_name} - {idx + 1} / {len(tar_files)}")
         location_index.append(tar_file_date_name)
+        file_logger.info(f"{tar_file_date_name}: {time() - start_t:.2f}s")
         # process tar file
         potential_skip = _base_tar_file_iterator(tar_file, location_index, methods)
         if potential_skip:
