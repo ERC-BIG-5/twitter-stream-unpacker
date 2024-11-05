@@ -11,7 +11,6 @@ from src.process_methods.abstract_method import IterationMethod
 from src.status import MonthDatasetStatus
 from src.util import year_month_str, get_hashtags, consider_deletion
 
-
 @dataclass
 class CollectionStats:
     items: Optional[dict[str, Any]] = None
@@ -41,6 +40,9 @@ class StatsCollectionMethod(IterationMethod):
     - jsonl files
     - tar files
     - a whole dump folder (a month)
+
+    SO PRE WILL HAVE THE TOTAL BEING THE TOTAL, FOR REAL; AND THE 'accepted_posts' after LANGUAGE FILTERING
+    THE REGULAR STAT IS AFTER ORIGINAL-POST FILTERING
     """
 
     def __init__(self, settings: IterationSettings, config: Union[StatsMethodConfig, dict]):
