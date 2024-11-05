@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database
 
-from src.consts import logger, BASE_DBS_PATH, CONFIG, ENV_SETTINGS
+from src.consts import logger, BASE_DBS_PATH, CONFIG, ENV_SETTINGS, PROJECT_PATH
 from src.models import SingleLanguageSettings
 
 
@@ -56,7 +56,7 @@ def init_db(db_path: Path, read_only: bool = False,
     engine = create_engine(f'sqlite:///{db_uri}')
     if not db_path.exists():
         create_database(engine.url)
-        logger.info(f"creating db: {db_path.relative_to(BASE_DBS_PATH)}")
+        logger.info(f"creating db: {db_path.relative_to(PROJECT_PATH)}")
         from src.db.models import Base
         if tables:
             Base.metadata.create_all(engine, tables=[cls.__table__ for cls in tables])

@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 from logging import getLogger, StreamHandler, Formatter, FileHandler
 from pathlib import Path
-from typing import Literal, Optional, Any
+from typing import Literal, Optional, Any, Union
 
 from pydantic import SecretStr, Field, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,6 +21,7 @@ AUTO_RELEVANT_COLLECTION = BASE_DATA_PATH / "auto-relevant"
 BASE_MEDIA_FOLDER = BASE_DATA_PATH / "media"
 BASE_TEST_PATH = BASE_DATA_PATH / "test"
 BAGS_BASE_PATH = BASE_DATA_PATH / "bags"
+INDEX_DB_BASE_PATH = BASE_DATA_PATH / "index"
 
 ANNOTATED_BASE_PATH = BASE_DATA_PATH / "annotated"
 LOGS_BASE_PATH = BASE_DATA_PATH / "logs"
@@ -43,7 +44,7 @@ if not ENV_FILE_PATH.exists():
     print("BYE")
     sys.exit(1)
 
-for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_RUN_CONFIGS_PATH, BASE_TEST_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
+for p in [BASE_DATA_PATH, BASE_DBS_PATH, BASE_RUN_CONFIGS_PATH, INDEX_DB_BASE_PATH, BASE_TEST_PATH, BASE_REPACK_PATH, BASE_STAT_PATH, ANNOTATED_BASE_PATH, LOGS_BASE_PATH,
           BASE_LABELSTUDIO_DATA_PATH, LABELSTUDIO_LABEL_CONFIGS_PATH, AUTO_RELEVANT_COLLECTION, BAGS_BASE_PATH]:
     p.mkdir(parents=True, exist_ok=True)
 
@@ -71,6 +72,8 @@ class EnvSettings(BaseSettings):
     CONFIRM_RUN: bool = True
     LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     FILE_LOG_LEVEL: Literal["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
+    # INDEX DB
+    INDEX_DB: Literal["sqlite", "postgres"] = "sqlite"
     # for something else,... setting up a pg db
     PG_USER_NAME: Optional[str] = None
     PG_PASSWORD: Optional[SecretStr] = None
@@ -87,7 +90,7 @@ class EnvSettings(BaseSettings):
     # TODO this for later will be related to annotation_extra (maybe name it experiment)
     LABELSTUDIO_LABEL_CONFIG_FILENAME: str = "annotation_test.xml"
     # TEST MODE
-    TEST_NUM_TAR_FILES: int = Field(1, ge=1, description="number of days (in repack)")
+    TEST_NUM_TAR_FILES: int = Field(1, description="number of days (in repack)")
     TEST_NUM_JSONL_FILES: int = Field(20)
 
 
@@ -98,7 +101,7 @@ class Config(BaseModel):
     RESET_DATA: bool = False  # for main
     ANNOT_EXTRA: str = ANNOT_EXTRA_TEST_ROUND
     YEAR: int = 2022
-    MONTH: int
+    MONTH: Union[int, list[int], tuple[int, int]]
     DAYS: Optional[list[int]] = None
     COLLECTION_LIMIT: int = -1 # used random_repack
     METHODS: list[str] = []

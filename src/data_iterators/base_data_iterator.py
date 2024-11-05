@@ -97,7 +97,8 @@ def _base_dump_iterator(dump_path: Path, methods: list[IterationMethod]):
     tar_files = list(iter_tar_files(dump_path))
     if ENV_SETTINGS.TEST_MODE:
         logger.info(f"Test mode only takes {ENV_SETTINGS.TEST_NUM_TAR_FILES} tar file(s)")
-        tar_files = tar_files[:ENV_SETTINGS.TEST_NUM_TAR_FILES]
+        if ENV_SETTINGS.TEST_NUM_TAR_FILES != -1:
+            tar_files = tar_files[:ENV_SETTINGS.TEST_NUM_TAR_FILES]
     for idx, tar_file in enumerate(tar_files):
         start_t = time()
         tar_file_date_name = tarfile_datestr(tar_file)
@@ -107,9 +108,9 @@ def _base_dump_iterator(dump_path: Path, methods: list[IterationMethod]):
                 continue
         logger.info(f"tar file: {tar_file_date_name} - {idx + 1} / {len(tar_files)}")
         location_index.append(tar_file_date_name)
-        file_logger.info(f"{tar_file_date_name}: {time() - start_t:.2f}s")
         # process tar file
         potential_skip = _base_tar_file_iterator(tar_file, location_index, methods)
+        file_logger.info(f"{tar_file_date_name}: {time() - start_t}")
         if potential_skip:
             return potential_skip
         location_index.pop()

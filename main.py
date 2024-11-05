@@ -177,58 +177,68 @@ def data_process_main():
     if ENV_SETTINGS.RESET_DATA:
         reset()
     # load status
-    main_status = MainStatus.load_status()
-    main_status.sync_months()
-    # check if selected is available
-    logger.info(f"config-json: {ENV_SETTINGS.CONF_JSON}")
-    ym_s = year_month_str(CONFIG.YEAR, CONFIG.MONTH)
-    # if ym_s not in main_status.year_months:
-    #     # todo wtf
-    #     print(logger.error(f"year month: {ym_s} not included"))
-    #     return
-    month_status = main_status.year_months[ym_s]
-    settings = IterationSettings(CONFIG.YEAR, CONFIG.MONTH, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)
 
-    selected_methods = init_methods()
-    methods = create_methods(settings, selected_methods)
-
-    config_validation(methods)
-
-    if ENV_SETTINGS.CONFIRM_RUN:
-        print("-----------------")
-        print(f"data source: {CONFIG.DATA_SOURCE}")
-        print(f"config: {ENV_SETTINGS.CONF_JSON}")
-        print(f"test mode: {ENV_SETTINGS.TEST_MODE}")
-        print(f"languages: {CONFIG.LANGUAGES}")
-        print(f"year month: {CONFIG.YEAR}-{CONFIG.MONTH}")
-        if CONFIG.DAYS:
-            print(f"days: {CONFIG.DAYS}")
-        print(f"methods: {[m.method_name for m in selected_methods]}")
-
-        print("--------")
-        for method in methods:
-            print(f"Outputs: {method}")
-            method.print_outputs()
-            print("---")
-        input("press any key to continue")
-
-    file_logger.info(json.dumps(CONFIG.model_dump()))
-
-    # main process going through the dump folder
-
-    if ENV_SETTINGS.TEST_MODE:
-        logger.info("Test-mode on")
-
-    # CHECK ITER SOURCE
-    if CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
-        iter_dumps_main(settings, month_status, methods)
-    elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
-        repack_iterator(settings, month_status, methods)
-    elif CONFIG.DATA_SOURCE == DATA_SOURCE_RANDOM_REPACK:
-        repack_iter = RandomPackedDataIterator(settings, month_status, methods)
-        repack_iter.run()
+    months = CONFIG.MONTHS
+    if isinstance(months, int):
+        months = [months]
+    elif isinstance(months, tuple):
+        months = list(range(months[0], months[1] + 1))
     else:
-        logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
+        pass
+
+    for month in months:
+        main_status = MainStatus.load_status()
+        main_status.sync_months()
+        # check if selected is available
+        logger.info(f"config-json: {ENV_SETTINGS.CONF_JSON}")
+        ym_s = year_month_str(CONFIG.YEAR, month)
+        # if ym_s not in main_status.year_months:
+        #     # todo wtf
+        #     print(logger.error(f"year month: {ym_s} not included"))
+        #     return
+        month_status = main_status.year_months[ym_s]
+        settings = IterationSettings(CONFIG.YEAR, month, CONFIG.LANGUAGES, CONFIG.ANNOT_EXTRA)
+
+        selected_methods = init_methods()
+        methods = create_methods(settings, selected_methods)
+
+        config_validation(methods)
+
+        if ENV_SETTINGS.CONFIRM_RUN:
+            print("-----------------")
+            print(f"data source: {CONFIG.DATA_SOURCE}")
+            print(f"config: {ENV_SETTINGS.CONF_JSON}")
+            print(f"test mode: {ENV_SETTINGS.TEST_MODE}")
+            print(f"languages: {CONFIG.LANGUAGES}")
+            print(f"year month: {CONFIG.YEAR}-{month}")
+            if CONFIG.DAYS:
+                print(f"days: {CONFIG.DAYS}")
+            print(f"methods: {[m.method_name for m in selected_methods]}")
+
+            print("--------")
+            for method in methods:
+                print(f"Outputs: {method}")
+                method.print_outputs()
+                print("---")
+            input("press any key to continue")
+
+        file_logger.info(json.dumps(CONFIG.model_dump()))
+
+        # main process going through the dump folder
+
+        if ENV_SETTINGS.TEST_MODE:
+            logger.info("Test-mode on")
+
+        # CHECK ITER SOURCE
+        if CONFIG.DATA_SOURCE == DATA_SOURCE_DUMP:
+            iter_dumps_main(settings, month_status, methods)
+        elif CONFIG.DATA_SOURCE == DATA_SOURCE_REPACK:
+            repack_iterator(settings, month_status, methods)
+        elif CONFIG.DATA_SOURCE == DATA_SOURCE_RANDOM_REPACK:
+            repack_iter = RandomPackedDataIterator(settings, month_status, methods)
+            repack_iter.run()
+        else:
+            logger.error(f"unknown data-source: {CONFIG.DATA_SOURCE}")
 
     #
     # entries = []
